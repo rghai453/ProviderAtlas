@@ -1,65 +1,119 @@
-import Image from "next/image";
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { getHomepageStats } from '@/lib/services/stats';
+import { getTopSpecialties } from '@/lib/services/specialties';
+import { getNewProviders } from '@/lib/services/providers';
+import { SearchBar } from '@/components/SearchBar';
+import { StatCards } from '@/components/StatCards';
+import { ProviderCard } from '@/components/ProviderCard';
 
-export default function Home() {
+export const metadata: Metadata = {
+  title: 'ProviderAtlas — Texas Healthcare Provider Intelligence',
+  description:
+    'Search 300,000+ Texas healthcare providers. NPI registry data, pharma payment transparency, specialty directories. Updated daily from CMS.',
+  openGraph: {
+    title: 'ProviderAtlas — Texas Healthcare Provider Intelligence',
+    description:
+      'Search 300,000+ Texas healthcare providers. NPI registry data, pharma payment transparency, specialty directories. Updated daily from CMS.',
+    siteName: 'ProviderAtlas',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ProviderAtlas — Texas Healthcare Provider Intelligence',
+    description:
+      'Search 300,000+ Texas healthcare providers. NPI registry data, pharma payment transparency, specialty directories.',
+  },
+};
+
+export default async function HomePage(): Promise<React.ReactNode> {
+  const [stats, topSpecialties, recentProviders] = await Promise.all([
+    getHomepageStats(),
+    getTopSpecialties(12),
+    getNewProviders(1),
+  ]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-900 to-indigo-900 text-white py-20 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Texas Healthcare Provider Intelligence
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-lg text-blue-100 mb-8">
+            Search 300,000+ providers. NPI data, pharma payments, specialty directories. Updated
+            daily.
           </p>
+          <div className="max-w-2xl mx-auto">
+            <SearchBar placeholder="Search by provider name, specialty, or NPI..." />
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      {/* Stats */}
+      <section className="max-w-6xl mx-auto px-4 -mt-8">
+        <StatCards
+          stats={[
+            {
+              label: 'Healthcare Providers',
+              value: stats.totalProviders?.toLocaleString() || '300,000+',
+            },
+            {
+              label: 'Medical Specialties',
+              value: stats.totalSpecialties?.toLocaleString() || '200+',
+            },
+            { label: 'Texas Cities', value: stats.totalCities?.toLocaleString() || '1,200+' },
+          ]}
+        />
+      </section>
+
+      {/* Browse by Specialty */}
+      <section className="max-w-6xl mx-auto px-4 py-16">
+        <h2 className="text-2xl font-bold mb-8">Browse by Specialty</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {topSpecialties.map((s) => (
+            <Link
+              key={s.code}
+              href={`/providers/${encodeURIComponent(s.description.toLowerCase())}`}
+              className="p-4 border border-gray-200 rounded-lg hover:shadow-md hover:border-blue-300 transition-all"
+            >
+              <p className="font-medium text-gray-900">{s.description}</p>
+              <p className="text-sm text-gray-500">{s.providerCount.toLocaleString()} providers</p>
+            </Link>
+          ))}
         </div>
-      </main>
-    </div>
+        <div className="text-center mt-8">
+          <Link href="/specialties" className="text-blue-600 hover:text-blue-800 font-medium">
+            View all specialties →
+          </Link>
+        </div>
+      </section>
+
+      {/* Recent Providers */}
+      <section className="bg-gray-50 py-16 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold">Recently Registered Providers</h2>
+            <Link href="/new-providers" className="text-blue-600 hover:text-blue-800 font-medium">
+              View all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {recentProviders.providers.slice(0, 6).map((p) => (
+              <ProviderCard key={p.npi} provider={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badge */}
+      <section className="max-w-4xl mx-auto px-4 py-12 text-center">
+        <div className="inline-flex items-center gap-2 bg-green-50 text-green-800 px-4 py-2 rounded-full text-sm font-medium">
+          <span className="w-2 h-2 bg-green-500 rounded-full" />
+          Updated daily from CMS NPI Registry &amp; Open Payments
+        </div>
+      </section>
+    </>
   );
 }

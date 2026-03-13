@@ -1,0 +1,30 @@
+name: Data Sync
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6am UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm tsx scripts/ingest/fetch-npi.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - run: pnpm tsx scripts/ingest/fetch-payments.ts
+      - run: pnpm tsx scripts/ingest/normalize.ts
+      - run: pnpm tsx scripts/ingest/seed.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - run: pnpm tsx scripts/generate/stats.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

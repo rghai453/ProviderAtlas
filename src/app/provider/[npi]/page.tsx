@@ -16,6 +16,7 @@ import { getUserById, createUser, getUserSubscriptionTier } from '@/lib/services
 import { ProGate } from '@/components/ProGate';
 import { MipsScoreCard } from '@/components/MipsScoreCard';
 import { FREE_PRESCRIBER_DRUG_LIMIT } from '@/lib/tier-limits';
+import { AdUnit } from '@/components/AdUnit';
 
 export const dynamic = 'force-dynamic';
 
@@ -296,6 +297,11 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
               </>
             )}
 
+            {/* In-content ad (free users only) */}
+            {!isPro && (
+              <AdUnit slot="XXXXXXXXXX" format="rectangle" className="my-6" />
+            )}
+
             {/* MIPS Performance */}
             {mipsData && (
               <>
@@ -483,6 +489,11 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
                 Claim this profile
               </Link>
             </div>
+
+            {/* Sidebar ad (free users only) */}
+            {!isPro && (
+              <AdUnit slot="XXXXXXXXXX" format="vertical" className="min-h-[250px]" />
+            )}
 
           </aside>
         </div>

@@ -15,6 +15,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_URL: z.string().url().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
+  NEXT_PUBLIC_GOOGLE_ADSENSE_ID: z.string().startsWith('ca-pub-').optional(),
 });
 
 export const env = envSchema.parse(process.env);

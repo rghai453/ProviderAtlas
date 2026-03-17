@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Dashboard | ProviderAtlas',
-  description: 'Manage your saved searches, alerts, and subscription.',
+  description: 'Manage your alerts and subscription.',
 };
 
 export default async function DashboardPage(): Promise<React.ReactNode> {
@@ -54,35 +54,7 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
       </div>
 
       {/* Quick links grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
-        <Link
-          href="/dashboard/saved-searches"
-          className="group p-5 border border-border rounded-sm hover:bg-muted/20 transition-colors"
-        >
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-muted-foreground"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
-                />
-              </svg>
-            </div>
-            <h2 className="text-sm font-semibold text-foreground group-hover:text-emerald-600">
-              Saved Searches
-            </h2>
-          </div>
-          <p className="text-xs text-muted-foreground">View and re-run your saved provider searches.</p>
-        </Link>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1">
         <Link
           href="/dashboard/alerts"
           className="group p-5 border border-border rounded-sm hover:bg-muted/20 transition-colors"

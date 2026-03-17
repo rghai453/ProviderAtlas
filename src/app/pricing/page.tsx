@@ -5,11 +5,11 @@ import { faqJsonLd } from '@/lib/seo';
 export const metadata: Metadata = {
   title: 'Pricing — ProviderAtlas',
   description:
-    'Choose a plan to unlock contact information, CSV exports, saved searches, and provider alerts. Free tier always available.',
+    'Choose a plan to unlock contact information, CSV exports, and provider alerts. Free tier always available.',
   openGraph: {
     title: 'Pricing — ProviderAtlas',
     description:
-      'Choose a plan to unlock contact information, CSV exports, saved searches, and provider alerts.',
+      'Choose a plan to unlock contact information, CSV exports, and provider alerts.',
     siteName: 'ProviderAtlas',
   },
   twitter: {
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 const pricingFaqs = faqJsonLd([
   {
     question: 'How much does ProviderAtlas cost?',
-    answer: 'ProviderAtlas is free to browse. Pro is $29/month for contact details, full data breakdowns, CSV exports, saved searches, and email alerts.',
+    answer: 'ProviderAtlas is free to browse. Pro is $29/month for contact details, full data breakdowns, CSV exports, and email alerts.',
   },
   {
     question: "What's included in the free tier?",

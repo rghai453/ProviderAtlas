@@ -88,7 +88,6 @@ export default async function BillingPage(): Promise<React.ReactNode> {
             {[
               'Full contact information (phone, fax)',
               'CSV exports — unlimited downloads',
-              'Saved searches',
               'Provider alerts via email',
               'Priority support',
             ].map((feature) => (

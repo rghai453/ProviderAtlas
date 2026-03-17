@@ -31,15 +31,6 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-// Saved Searches
-export const savedSearches = pgTable('saved_searches', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
-  name: text('name').notNull(),
-  query: jsonb('query').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
-
 // Alerts
 export const alerts = pgTable('alerts', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -204,15 +195,7 @@ export const paymentsRelations = relations(payments, ({ one }) => ({
 }));
 
 export const usersRelations = relations(users, ({ many }) => ({
-  savedSearches: many(savedSearches),
   alerts: many(alerts),
-}));
-
-export const savedSearchesRelations = relations(savedSearches, ({ one }) => ({
-  user: one(users, {
-    fields: [savedSearches.userId],
-    references: [users.id],
-  }),
 }));
 
 export const alertsRelations = relations(alerts, ({ one }) => ({
@@ -252,4 +235,3 @@ export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 export const insertAlertSchema = createInsertSchema(alerts);
 export const selectAlertSchema = createSelectSchema(alerts);
-export const insertSavedSearchSchema = createInsertSchema(savedSearches);

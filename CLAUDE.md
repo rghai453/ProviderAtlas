@@ -35,5 +35,5 @@ pnpm tsx scripts/ingest/seed.ts          # Seed database
 
 ## Monetization
 - Free tier: browse providers, basic search
-- Pro ($29/mo): contact info reveal, CSV export, saved searches, alerts
+- Pro ($29/mo): contact info reveal, CSV export, alerts
 - Data lists: one-time Stripe purchases for pre-built CSV datasets

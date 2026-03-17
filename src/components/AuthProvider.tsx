@@ -10,7 +10,7 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps): React.ReactNode {
   return (
-    <NeonAuthUIProvider authClient={authClient} redirectTo="/dashboard" emailOTP>
+    <NeonAuthUIProvider authClient={authClient} redirectTo="/dashboard" emailOTP social={{ providers: ['google'] }} account={{ basePath: '/dashboard', viewPaths: { SETTINGS: '' } }}>
       {children}
     </NeonAuthUIProvider>
   );

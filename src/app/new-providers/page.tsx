@@ -2,21 +2,23 @@ import type { Metadata } from 'next';
 import { getNewProviders } from '@/lib/services/providers';
 import { ProviderGrid } from '@/components/ProviderGrid';
 import { Pagination } from '@/components/Pagination';
+import { auth } from '@/lib/auth/server';
+import { getUserSubscriptionTier } from '@/lib/services/users';
+import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
 export const metadata: Metadata = {
   title: 'Recently Registered Providers — Texas | ProviderAtlas',
   description:
-    'Browse Texas healthcare providers who recently registered with the NPI registry. Updated daily from CMS.',
+    'Texas healthcare providers who recently registered with the NPI registry. Updated daily from CMS.',
   openGraph: {
     title: 'Recently Registered Providers — Texas | ProviderAtlas',
-    description:
-      'Browse Texas healthcare providers who recently registered with the NPI registry. Updated daily from CMS.',
+    description: 'Texas healthcare providers who recently registered with the NPI registry.',
     siteName: 'ProviderAtlas',
   },
   twitter: {
     card: 'summary',
     title: 'Recently Registered Providers — Texas | ProviderAtlas',
-    description: 'Browse Texas healthcare providers who recently registered with the NPI registry.',
+    description: 'Texas healthcare providers who recently registered with the NPI registry.',
   },
 };
 
@@ -30,23 +32,37 @@ export default async function NewProvidersPage({
   const { page: pageParam } = await searchParams;
   const page = pageParam ? parseInt(pageParam, 10) : 1;
 
+  let isPro = false;
+  try {
+    const { data: session } = await auth.getSession();
+    if (session?.user) {
+      const tier = await getUserSubscriptionTier(session.user.id);
+      isPro = tier === 'pro';
+    }
+  } catch {
+    // Auth unavailable
+  }
+
   const results = await getNewProviders(page);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">Recently Registered Providers</h1>
-      <p className="text-gray-600 mb-8">
-        {results.total.toLocaleString()} providers registered in the last 30 days
-      </p>
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">New Registrations</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          <span className="font-mono">{results.total.toLocaleString()}</span> providers registered in the last 30 days
+        </p>
+      </div>
 
       <ProviderGrid providers={results.providers} />
 
       {results.totalPages > 1 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <Pagination
             currentPage={results.page}
             totalPages={results.totalPages}
             basePath="/new-providers"
+            maxPage={isPro ? undefined : FREE_SEARCH_MAX_PAGES}
           />
         </div>
       )}

@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getAllSpecialties } from '@/lib/services/specialties';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 
 export const metadata: Metadata = {
   title: 'Medical Specialties Directory — Texas | ProviderAtlas',
@@ -23,25 +25,38 @@ export default async function SpecialtiesPage(): Promise<React.ReactNode> {
   const specialties = await getAllSpecialties();
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">Medical Specialties</h1>
-      <p className="text-gray-600 mb-8">
-        {specialties.length.toLocaleString()} specialties across Texas
-      </p>
+    <div className="mx-auto max-w-6xl px-4 py-12">
+      {/* Page header */}
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">
+          Medical Specialties
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          Browse {specialties.length.toLocaleString()} tracked specialties across Texas. Click any
+          specialty to explore providers.
+        </p>
+      </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Specialty grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {specialties.map((s) => (
           <Link
             key={s.code}
             href={`/providers/${encodeURIComponent(s.description.toLowerCase())}`}
-            className="group flex flex-col gap-1 p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all"
+            className="group"
           >
-            <p className="font-semibold text-gray-900 group-hover:text-blue-700 text-sm leading-snug">
-              {s.description}
-            </p>
-            <p className="text-xs text-gray-500">
-              {s.providerCount.toLocaleString()} providers
-            </p>
+            <Card className="h-full cursor-pointer transition-all hover:bg-muted/20 hover:ring-1 hover:ring-border">
+              <CardContent className="flex flex-col gap-2 pt-4 pb-4">
+                <p className="text-sm font-semibold leading-snug text-foreground transition-colors group-hover:text-emerald-600">
+                  {s.description}
+                </p>
+                <div>
+                  <Badge variant="secondary" className="text-xs">
+                    {s.providerCount.toLocaleString()} providers
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
           </Link>
         ))}
       </div>

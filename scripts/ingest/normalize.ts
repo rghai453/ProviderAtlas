@@ -40,6 +40,42 @@ interface NormalizedPayment {
   programYear: number | null;
 }
 
+export function normalizeSpecialtyDescription(raw: string, collisions: Set<string>): string {
+  // 1. Trim and collapse whitespace, strip trailing commas
+  let desc = raw.trim().replace(/,\s*$/, '').replace(/\s+/g, ' ');
+
+  // 2. If no comma, return as-is
+  if (!desc.includes(', ')) return desc;
+
+  // 3. Split on first comma
+  const commaIdx = desc.indexOf(', ');
+  const prefix = desc.slice(0, commaIdx);
+  const suffix = desc.slice(commaIdx + 2).trim();
+  if (!suffix) return prefix;
+
+  // 4. If sub-specialty is unique, drop prefix
+  if (!collisions.has(suffix)) return suffix;
+
+  // 5. If collision, use em dash format
+  return `${prefix} — ${suffix}`;
+}
+
+export function buildCollisionSet(descriptions: string[]): Set<string> {
+  const suffixToCodeCount = new Map<string, number>();
+  for (const raw of descriptions) {
+    const cleaned = raw.trim().replace(/,\s*$/, '').replace(/\s+/g, ' ');
+    if (!cleaned.includes(', ')) continue;
+    const suffix = cleaned.slice(cleaned.indexOf(', ') + 2).trim();
+    if (!suffix) continue;
+    suffixToCodeCount.set(suffix, (suffixToCodeCount.get(suffix) ?? 0) + 1);
+  }
+  const collisions = new Set<string>();
+  for (const [suffix, count] of suffixToCodeCount) {
+    if (count >= 2) collisions.add(suffix);
+  }
+  return collisions;
+}
+
 function cleanName(name: string | null | undefined): string | null {
   if (!name) return null;
   return name.trim().replace(/\s+/g, ' ').split(' ').map(w =>
@@ -77,7 +113,9 @@ function normalizeProviders(): NormalizedProvider[] {
       if (!npi) continue;
 
       const basic = r.basic || {};
-      const address = r.addresses?.[0] || {};
+      const addresses = r.addresses || [];
+      // Prefer the TX address; fall back to first address
+      const address = addresses.find((a: Record<string, unknown>) => a.state === 'TX') || addresses[0] || {};
       const taxonomy = r.taxonomies?.[0] || {};
       const entityType = r.enumeration_type === 'NPI-1' ? 'individual' : 'organization';
 
@@ -97,12 +135,15 @@ function normalizeProviders(): NormalizedProvider[] {
         addressLine1: address.address_1 || null,
         addressLine2: address.address_2 || null,
         city: cleanName(address.city),
-        state: address.state || 'TX',
+        state: address.state || null,
         zip: address.postal_code?.slice(0, 5) || null,
         county: null,
         enumerationDate: basic.enumeration_date || null,
         lastUpdated: basic.last_updated || null,
       };
+
+      // Only include Texas providers
+      if (provider.state !== 'TX') continue;
 
       provider.slug = generateSlug(provider);
       providers.set(npi, provider);
@@ -167,7 +208,7 @@ async function main(): Promise<void> {
   const payments = normalizePayments();
   console.log(`  → ${payments.length} payments normalized`);
 
-  // Collect unique specialties
+  // Collect unique specialties (raw descriptions first)
   const specialties = new Map<string, { code: string; description: string; count: number }>();
   for (const p of providers) {
     if (p.taxonomyCode && p.specialtyDescription) {
@@ -184,6 +225,21 @@ async function main(): Promise<void> {
     }
   }
 
+  // Build collision set from raw specialty descriptions (one per taxonomy code)
+  const rawDescriptions = Array.from(specialties.values()).map(s => s.description);
+  const collisions = buildCollisionSet(rawDescriptions);
+  console.log(`  → ${collisions.size} colliding sub-specialty names detected`);
+
+  // Normalize specialty descriptions
+  for (const s of specialties.values()) {
+    s.description = normalizeSpecialtyDescription(s.description, collisions);
+  }
+  for (const p of providers) {
+    if (p.specialtyDescription) {
+      p.specialtyDescription = normalizeSpecialtyDescription(p.specialtyDescription, collisions);
+    }
+  }
+
   fs.writeFileSync(path.join(OUTPUT_DIR, 'providers.json'), JSON.stringify(providers, null, 2));
   fs.writeFileSync(path.join(OUTPUT_DIR, 'payments.json'), JSON.stringify(payments, null, 2));
   fs.writeFileSync(path.join(OUTPUT_DIR, 'specialties.json'), JSON.stringify(Array.from(specialties.values()), null, 2));
@@ -194,4 +250,8 @@ async function main(): Promise<void> {
   console.log(`  Specialties: ${specialties.size}`);
 }
 
-main();
+// Only run main() when executed directly, not when imported
+const isDirectRun = process.argv[1]?.endsWith('normalize.ts') || process.argv[1]?.endsWith('normalize');
+if (isDirectRun) {
+  main();
+}

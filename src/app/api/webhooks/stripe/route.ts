@@ -1,4 +1,4 @@
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { headers } from 'next/headers';
 import { env } from '@/lib/env';
 import {
@@ -20,7 +20,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let event;
   try {
-    event = stripe.webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET);
+    event = getStripe().webhooks.constructEvent(body, signature, env.STRIPE_WEBHOOK_SECRET!);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
     return Response.json({ error: 'Invalid signature' }, { status: 400 });

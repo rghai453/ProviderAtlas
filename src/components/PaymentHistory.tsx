@@ -1,6 +1,16 @@
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+
 interface Payment {
   payerName: string;
-  amount: number; // cents
+  amount: number;
   dateOfPayment?: Date | string | null;
   natureOfPayment?: string | null;
 }
@@ -9,10 +19,8 @@ interface PaymentHistoryProps {
   payments: Payment[];
 }
 
-function formatCents(cents: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
-    cents / 100,
-  );
+function formatDollars(cents: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 }
 
 function formatDate(raw: Date | string | null | undefined): string {
@@ -24,9 +32,9 @@ function formatDate(raw: Date | string | null | undefined): string {
 export function PaymentHistory({ payments }: PaymentHistoryProps): React.ReactNode {
   if (payments.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 px-6 py-10 text-center">
-        <p className="text-sm font-medium text-gray-600">No Open Payments records found</p>
-        <p className="mt-1 text-xs text-gray-400">
+      <div className="rounded-xl border border-dashed border-border bg-muted/40 px-6 py-10 text-center">
+        <p className="text-sm font-medium text-foreground">No Open Payments records found</p>
+        <p className="mt-1 text-xs text-muted-foreground">
           This provider has no reported industry payments on file.
         </p>
       </div>
@@ -40,56 +48,42 @@ export function PaymentHistory({ payments }: PaymentHistoryProps): React.ReactNo
   });
 
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+    <div className="overflow-hidden rounded-xl border border-border bg-card">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
-              >
-                Date
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
-              >
-                Company
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500"
-              >
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide">Date</TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide">Company</TableHead>
+              <TableHead className="text-right text-xs font-semibold uppercase tracking-wide">
                 Amount
-              </th>
-              <th
-                scope="col"
-                className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
-              >
-                Type
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
+              </TableHead>
+              <TableHead className="text-xs font-semibold uppercase tracking-wide">Type</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {sorted.map((payment, i) => (
-              <tr key={i} className="transition-colors hover:bg-gray-50">
-                <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-600">
+              <TableRow key={i}>
+                <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                   {formatDate(payment.dateOfPayment)}
-                </td>
-                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                </TableCell>
+                <TableCell className="text-sm font-medium text-foreground">
                   {payment.payerName}
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-semibold text-gray-900">
-                  {formatCents(payment.amount)}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-500">
-                  {payment.natureOfPayment ?? '—'}
-                </td>
-              </tr>
+                </TableCell>
+                <TableCell className="whitespace-nowrap text-right text-sm font-semibold text-foreground">
+                  {formatDollars(payment.amount)}
+                </TableCell>
+                <TableCell className="text-sm">
+                  {payment.natureOfPayment ? (
+                    <Badge variant="secondary">{payment.natureOfPayment}</Badge>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

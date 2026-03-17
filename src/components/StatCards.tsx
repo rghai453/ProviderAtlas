@@ -12,19 +12,15 @@ interface StatCardsProps {
 
 export function StatCards({ stats }: StatCardsProps): React.ReactNode {
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="flex flex-col divide-y divide-border sm:flex-row sm:divide-x sm:divide-y-0">
       {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-blue-50/40 p-5"
-        >
-          {stat.icon && (
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-              {stat.icon}
-            </div>
-          )}
-          <p className="text-2xl font-bold tracking-tight text-gray-900">{stat.value}</p>
-          <p className="text-sm text-gray-500">{stat.label}</p>
+        <div key={stat.label} className="flex-1 px-6 py-4 first:pl-0 last:pr-0">
+          <p className="font-mono text-2xl font-bold tracking-tight text-foreground">
+            {stat.value}
+          </p>
+          <p className="mt-1 text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            {stat.label}
+          </p>
         </div>
       ))}
     </div>

@@ -2,6 +2,7 @@ import { db } from '@/db';
 import { providers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import Papa from 'papaparse';
+import { PRO_CSV_EXPORT_MAX_ROWS } from '@/lib/tier-limits';
 
 interface ExportFilters {
   specialty?: string;
@@ -35,7 +36,7 @@ export async function generateExportCsv(filters: ExportFilters): Promise<string>
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const rows = await db.select().from(providers).where(where);
+  const rows = await db.select().from(providers).where(where).limit(PRO_CSV_EXPORT_MAX_ROWS);
 
   const csvRows: ProviderCsvRow[] = rows.map((p) => ({
     NPI: p.npi,

@@ -2,9 +2,12 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getProvidersBySpecialty } from '@/lib/services/providers';
-import { createSpecialtyMetadata } from '@/lib/seo';
+import { createSpecialtyMetadata, breadcrumbJsonLd, BASE_URL } from '@/lib/seo';
 import { ProviderGrid } from '@/components/ProviderGrid';
 import { Pagination } from '@/components/Pagination';
+import { auth } from '@/lib/auth/server';
+import { getUserSubscriptionTier } from '@/lib/services/users';
+import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
 interface SpecialtyPageProps {
   params: Promise<{ specialty: string }>;
@@ -17,8 +20,10 @@ export async function generateMetadata({ params }: SpecialtyPageProps): Promise<
 
   const results = await getProvidersBySpecialty(decoded);
 
+  const displayName = results.providers[0]?.specialtyDescription ?? decoded;
+
   return createSpecialtyMetadata({
-    specialty: decoded,
+    specialty: displayName,
     count: results.total,
   });
 }
@@ -33,49 +38,69 @@ export default async function SpecialtyPage({
   const decoded = decodeURIComponent(specialty);
   const page = pageParam ? parseInt(pageParam, 10) : 1;
 
+  let isPro = false;
+  try {
+    const { data: session } = await auth.getSession();
+    if (session?.user) {
+      const tier = await getUserSubscriptionTier(session.user.id);
+      isPro = tier === 'pro';
+    }
+  } catch {
+    // Auth unavailable
+  }
+
   const results = await getProvidersBySpecialty(decoded, undefined, page);
 
   if (results.total === 0 && page === 1) {
     notFound();
   }
 
+  // Use the properly-cased name from actual data, not the lowercased URL
+  const displayName = results.providers[0]?.specialtyDescription ?? decoded;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd([
+        { name: 'Home', url: BASE_URL },
+        { name: displayName, url: `${BASE_URL}/providers/${encodeURIComponent(displayName.toLowerCase())}` },
+      ])) }}
+    />
+    <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2">
+      <nav className="text-xs text-muted-foreground mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-1.5">
           <li>
-            <Link href="/" className="hover:text-blue-600">
+            <Link href="/" className="hover:text-foreground transition-colors">
               Home
             </Link>
           </li>
-          <li>/</li>
-          <li>
-            <Link href="/providers" className="hover:text-blue-600">
-              Providers
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium">{decoded}</li>
+          <li aria-hidden="true">/</li>
+          <li className="text-foreground">{displayName}</li>
         </ol>
       </nav>
 
-      <h1 className="text-3xl font-bold mb-2">{decoded}</h1>
-      <p className="text-gray-600 mb-8">
-        {results.total.toLocaleString()} providers in Texas
-      </p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          <span className="font-mono">{results.total.toLocaleString()}</span> providers in Texas
+        </p>
+      </div>
 
       <ProviderGrid providers={results.providers} />
 
       {results.totalPages > 1 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <Pagination
             currentPage={results.page}
             totalPages={results.totalPages}
             basePath={`/providers/${specialty}`}
+            maxPage={isPro ? undefined : FREE_SEARCH_MAX_PAGES}
           />
         </div>
       )}
     </div>
+    </>
   );
 }

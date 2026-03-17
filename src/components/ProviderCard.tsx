@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SpecialtyIcon } from '@/components/SpecialtyIcon';
 import type { providers } from '@/db/schema';
 
 type Provider = typeof providers.$inferSelect;
@@ -13,52 +14,44 @@ export function ProviderCard({ provider }: ProviderCardProps): React.ReactNode {
       ? (provider.organizationName ?? 'Unknown Organization')
       : [provider.firstName, provider.lastName].filter(Boolean).join(' ') || 'Unknown Provider';
 
-  const location = [provider.city, provider.state, provider.zip].filter(Boolean).join(', ');
+  const locationParts = [provider.city, provider.state, provider.zip].filter(Boolean);
 
   return (
     <Link
       href={`/provider/${provider.npi}`}
-      className="group flex flex-col gap-3 rounded-xl border border-gray-200 bg-white p-5 transition-all hover:border-blue-200 hover:shadow-md"
+      className="block border border-border rounded-sm p-3 hover:bg-muted/50 transition-colors"
     >
-      {/* Name */}
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-base font-semibold text-gray-900 group-hover:text-blue-700 leading-snug">
-          {displayName}
-        </h3>
-        {provider.credential && (
-          <span className="shrink-0 text-xs font-medium text-gray-500">{provider.credential}</span>
-        )}
+      {/* Row 1: Name + NPI */}
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="font-medium text-sm text-foreground truncate">{displayName}</span>
+        <span className="font-mono text-xs text-muted-foreground shrink-0">{provider.npi}</span>
       </div>
 
-      {/* Specialty badge */}
+      {/* Row 2: Specialty */}
       {provider.specialtyDescription && (
-        <span className="inline-flex w-fit items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/10">
-          {provider.specialtyDescription}
-        </span>
-      )}
-
-      {/* Location */}
-      {location && (
-        <div className="flex items-center gap-1.5 text-sm text-gray-500">
-          <svg
-            className="h-3.5 w-3.5 shrink-0"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.144-.742 19.58 19.58 0 002.683-2.282c1.944-2.083 3.968-5.124 3.968-8.827a8.25 8.25 0 00-16.5 0c0 3.703 2.024 6.744 3.968 8.827a19.58 19.58 0 002.683 2.282 16.975 16.975 0 001.144.742zM12 13.5a3 3 0 100-6 3 3 0 000 6z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>{location}</span>
+        <div className="mt-1 flex items-center gap-1">
+          <SpecialtyIcon
+            specialty={provider.specialtyDescription}
+            className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          />
+          <span className="text-xs text-muted-foreground truncate">
+            {provider.specialtyDescription}
+          </span>
         </div>
       )}
 
-      {/* NPI */}
-      <p className="text-xs text-gray-400">NPI: {provider.npi}</p>
+      {/* Row 3: Location + Medicare */}
+      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+        {locationParts.length > 0 && (
+          <span>{locationParts.join(' · ')}</span>
+        )}
+        {provider.acceptsMedicare && (
+          <span className="inline-flex items-center gap-1 text-emerald-600 font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            Medicare
+          </span>
+        )}
+      </div>
     </Link>
   );
 }

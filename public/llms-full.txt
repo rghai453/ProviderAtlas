@@ -1,0 +1,107 @@
+# ProviderAtlas — Full Documentation
+
+> Texas Healthcare Provider Intelligence Platform
+
+## Overview
+
+ProviderAtlas aggregates public healthcare data for 280,000+ Texas providers into a single searchable platform. It cross-references five federal data sources to give researchers, compliance officers, medical sales professionals, and journalists a complete picture of any healthcare provider's practice, payments, and prescribing patterns.
+
+## Data Sources & Coverage
+
+### NPI Registry (NPPES)
+- Source: CMS National Plan & Provider Enumeration System
+- Coverage: All active Texas providers (individual + organization)
+- Fields: NPI, name, credentials, specialty, practice address, phone, fax, entity type, enumeration date
+- Updated: Daily via automated sync
+
+### Open Payments
+- Source: CMS Open Payments (Sunshine Act)
+- Coverage: 587,000+ payment records from pharma and device manufacturers to Texas providers
+- Fields: Payer name, payment amount, date, nature of payment, form of payment, program year
+- Updated: Annually when CMS releases new data
+
+### Medicare Utilization
+- Source: Medicare Physician & Other Practitioners by Provider and Service
+- Coverage: 277,000+ service records
+- Fields: HCPCS code, procedure description, total beneficiaries, total services, total Medicare payment
+- Updated: Annually
+
+### Medicare Part D Prescribers
+- Source: Medicare Part D Prescribers by Provider and Drug
+- Coverage: 718,000+ prescriber records
+- Fields: Brand name, generic name, total claims, total drug cost, total beneficiaries
+- Updated: Annually
+
+### MIPS Performance Scores
+- Source: Quality Payment Program
+- Fields: Final score, quality score, promoting interoperability score, improvement activities score, cost score, program year
+- Updated: Annually
+
+## URL Structure
+
+### Static Pages
+- / — Homepage with search, stats, top specialties
+- /providers — Full-text search with filters (specialty, city, ZIP, name, Medicare acceptance)
+- /specialties — Directory of all tracked medical specialties with provider counts
+- /cities — Top 50 Texas cities by provider count
+- /new-providers — Recently registered providers
+- /data — Pre-built CSV datasets for purchase
+- /pricing — Subscription tier comparison
+
+### Dynamic Pages (Programmatic SEO)
+- /provider/{npi} — Provider profile page. NPI is a 10-digit number (e.g., /provider/1234567890)
+- /payments/{npi} — Full pharma payment breakdown by company and year
+- /providers/{specialty} — All providers for a given specialty (URL-encoded lowercase, e.g., /providers/internal%20medicine)
+- /providers/{specialty}/{city} — Providers by specialty and city
+- /cities/{city} — All providers in a city (lowercase, e.g., /cities/houston)
+- /zip/{zip} — Providers by ZIP code (e.g., /zip/77002)
+
+### Authenticated Pages
+- /dashboard — User dashboard (saved searches, alerts, billing)
+- /auth/sign-in — Authentication via Neon Auth (Google/GitHub OAuth)
+
+## Data Model
+
+### Provider Profile (/provider/{npi})
+Each provider page shows:
+1. Header: Name, credentials, specialty, location, payment heat badge
+2. Contact info (Pro only): Phone, fax
+3. Medicare Activity: Total patients, services, Medicare payments; top procedures table (Pro only)
+4. MIPS Performance: Final score (free), category breakdown (Pro only)
+5. Prescribing Activity: Total prescriptions, drug cost, patients; top 3 drugs (free), full list (Pro only)
+6. Open Payments: Total received, company count; full breakdown with bar chart and transaction table (Pro only)
+7. Sidebar: NPI, entity type, gender, registration date, address
+8. Related providers in same city
+
+### Payment Page (/payments/{npi})
+Detailed pharma payment transparency:
+1. Summary: Total amount, transaction count
+2. Payments by company: Aggregated by payer with totals
+3. Payments by year: Annual breakdown
+4. All transactions: Complete list with date, company, nature, amount
+
+## Free vs Pro Access
+
+### Free Tier
+- Browse all providers and pages
+- Provider summary stats (Medicare totals, prescriber totals, payment totals)
+- Top 3 prescribed drugs
+- MIPS final score
+- Search with 3-page pagination limit
+
+### Pro Tier ($29/month)
+- Full Medicare procedure data tables
+- Complete prescribing data (all drugs)
+- Full payment breakdowns (bar charts, transaction tables)
+- MIPS category score breakdown
+- Contact information (phone, fax)
+- Unlimited search pagination
+- CSV exports
+- Saved searches and email alerts
+
+## Technical Stack
+- Next.js 15+ (App Router, TypeScript)
+- Neon Postgres (database)
+- Neon Auth (authentication)
+- Stripe (subscriptions)
+- Deployed on Vercel

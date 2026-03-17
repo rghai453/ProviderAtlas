@@ -1,6 +1,6 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
-import { providers, specialties, stats } from '../../src/db/schema';
+import { providers, specialties, stats, payments, medicareUtilization, prescriberData, mipsScores } from '../../src/db/schema';
 import { countDistinct, count } from 'drizzle-orm';
 import dotenv from 'dotenv';
 
@@ -26,11 +26,21 @@ async function generateStats(): Promise<void> {
   // Total unique cities
   const [cityCount] = await db.select({ count: countDistinct(providers.city) }).from(providers);
 
+  // Data source counts
+  const [paymentCount] = await db.select({ count: count() }).from(payments);
+  const [medicareCount] = await db.select({ count: count() }).from(medicareUtilization);
+  const [prescriberCount] = await db.select({ count: count() }).from(prescriberData);
+  const [mipsCount] = await db.select({ count: count() }).from(mipsScores);
+
   // Upsert stats
   const statsToUpsert = [
     { key: 'totalProviders', value: providerCount.count },
     { key: 'totalSpecialties', value: specialtyCount.count },
     { key: 'totalCities', value: cityCount.count },
+    { key: 'totalPayments', value: paymentCount.count },
+    { key: 'totalMedicareRecords', value: medicareCount.count },
+    { key: 'totalPrescriberRecords', value: prescriberCount.count },
+    { key: 'totalMipsScores', value: mipsCount.count },
   ];
 
   for (const stat of statsToUpsert) {
@@ -48,6 +58,10 @@ async function generateStats(): Promise<void> {
   console.log(`  Total providers: ${providerCount.count}`);
   console.log(`  Total specialties: ${specialtyCount.count}`);
   console.log(`  Total cities: ${cityCount.count}`);
+  console.log(`  Total payments: ${paymentCount.count}`);
+  console.log(`  Total medicare records: ${medicareCount.count}`);
+  console.log(`  Total prescriber records: ${prescriberCount.count}`);
+  console.log(`  Total MIPS scores: ${mipsCount.count}`);
 }
 
 generateStats();

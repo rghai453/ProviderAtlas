@@ -1,19 +1,20 @@
 'use client';
 
-export default function Error({
-  error,
+export default function PaymentsError({
   reset,
 }: {
-  error: Error;
+  error: Error & { digest?: string };
   reset: () => void;
 }): React.ReactNode {
   return (
-    <div className="max-w-4xl mx-auto px-4 py-16 text-center">
-      <h2 className="text-2xl font-bold mb-4">Something went wrong</h2>
-      <p className="text-gray-600 mb-6">{error.message}</p>
+    <div className="mx-auto max-w-5xl px-4 py-16 text-center">
+      <h2 className="text-lg font-bold mb-2">Something went wrong</h2>
+      <p className="text-sm text-muted-foreground mb-4">
+        We couldn&apos;t load this provider&apos;s payment data.
+      </p>
       <button
         onClick={reset}
-        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        className="text-sm text-emerald-600 hover:text-emerald-700 font-medium"
       >
         Try again
       </button>

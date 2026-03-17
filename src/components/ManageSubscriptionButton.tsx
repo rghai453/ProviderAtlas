@@ -25,7 +25,7 @@ export function ManageSubscriptionButton(): React.ReactNode {
     <button
       onClick={handleClick}
       disabled={loading}
-      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-50"
+      className="px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted/30 transition-colors text-sm font-medium disabled:opacity-50"
     >
       {loading ? 'Loading...' : 'Manage Subscription'}
     </button>

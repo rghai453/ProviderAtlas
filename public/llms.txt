@@ -1,0 +1,34 @@
+# ProviderAtlas
+
+> Texas Healthcare Provider Intelligence Platform
+
+ProviderAtlas is a public data SaaS that aggregates and cross-references healthcare provider data for Texas. It combines NPI registry data, CMS Open Payments (pharma/device manufacturer payments to providers), Medicare utilization, Medicare Part D prescriber data, and MIPS performance scores.
+
+## Data Sources
+- NPI National Plan & Provider Enumeration System (NPPES) — 280,000+ Texas providers
+- CMS Open Payments — 587,000+ pharma/device payment records
+- Medicare Physician & Other Practitioners — 277,000+ utilization records
+- Medicare Part D Prescribers — 718,000+ prescriber records
+- MIPS Quality Payment Program — performance scores
+
+## Pages
+- /providers — Search all Texas healthcare providers by name, specialty, city, ZIP
+- /provider/{npi} — Individual provider profile with NPI details, Medicare activity, prescribing data, pharma payments, MIPS scores
+- /payments/{npi} — Full pharma payment transparency for a provider
+- /specialties — Browse all medical specialties
+- /providers/{specialty} — Providers filtered by specialty
+- /providers/{specialty}/{city} — Providers by specialty and city
+- /cities — Browse providers by city
+- /cities/{city} — All providers in a city
+- /zip/{zip} — Providers by ZIP code
+- /new-providers — Recently registered providers
+- /data — Pre-built CSV datasets for purchase
+- /pricing — Free vs Pro subscription tiers
+
+## Access
+- Free: Provider profiles, summary stats, top 3 prescriptions, payment summaries, MIPS final score
+- Pro ($29/mo): Full Medicare procedure data, complete prescribing data, full payment breakdowns, MIPS category scores, contact info, CSV exports
+
+## Discovery
+- Sitemap: https://provideratlas.com/sitemap.xml
+- Full documentation: https://provideratlas.com/llms-full.txt

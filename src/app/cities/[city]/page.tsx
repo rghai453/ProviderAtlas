@@ -3,10 +3,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getProvidersByCity } from '@/lib/services/providers';
 import { getCityStats } from '@/lib/services/stats';
-import { getTopSpecialties } from '@/lib/services/specialties';
-import { createCityMetadata } from '@/lib/seo';
+import { createCityMetadata, breadcrumbJsonLd, BASE_URL } from '@/lib/seo';
 import { ProviderGrid } from '@/components/ProviderGrid';
 import { Pagination } from '@/components/Pagination';
+import { auth } from '@/lib/auth/server';
+import { getUserSubscriptionTier } from '@/lib/services/users';
+import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
 interface CityPageProps {
   params: Promise<{ city: string }>;
@@ -15,7 +17,7 @@ interface CityPageProps {
 
 export async function generateMetadata({ params }: CityPageProps): Promise<Metadata> {
   const { city } = await params;
-  const decodedCity = decodeURIComponent(city);
+  const decodedCity = decodeURIComponent(city).replace(/\b\w/g, (c) => c.toUpperCase());
   const count = await getCityStats(decodedCity);
 
   return createCityMetadata({ city: decodedCity, count });
@@ -28,13 +30,23 @@ export default async function CityPage({
   const { city } = await params;
   const { page: pageParam } = await searchParams;
 
-  const decodedCity = decodeURIComponent(city);
+  const decodedCity = decodeURIComponent(city).replace(/\b\w/g, (c) => c.toUpperCase());
   const page = pageParam ? parseInt(pageParam, 10) : 1;
 
-  const [results, count, topSpecialties] = await Promise.all([
+  let isPro = false;
+  try {
+    const { data: session } = await auth.getSession();
+    if (session?.user) {
+      const tier = await getUserSubscriptionTier(session.user.id);
+      isPro = tier === 'pro';
+    }
+  } catch {
+    // Auth unavailable
+  }
+
+  const [results, count] = await Promise.all([
     getProvidersByCity(decodedCity, page),
     getCityStats(decodedCity),
-    getTopSpecialties(8),
   ]);
 
   if (count === 0 && page === 1) {
@@ -42,52 +54,44 @@ export default async function CityPage({
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd([
+        { name: 'Home', url: BASE_URL },
+        { name: `${decodedCity}, Texas`, url: `${BASE_URL}/cities/${encodeURIComponent(decodedCity.toLowerCase())}` },
+      ])) }}
+    />
+    <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2">
-          <li>
-            <Link href="/" className="hover:text-blue-600">
-              Home
-            </Link>
-          </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium">{decodedCity}, Texas</li>
+      <nav className="text-xs text-muted-foreground mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-1.5">
+          <li><Link href="/" className="hover:text-foreground transition-colors">Home</Link></li>
+          <li aria-hidden="true">/</li>
+          <li className="text-foreground">{decodedCity}, Texas</li>
         </ol>
       </nav>
 
-      <h1 className="text-3xl font-bold mb-2">
-        Healthcare Providers in {decodedCity}, Texas
-      </h1>
-      <p className="text-gray-600 mb-8">{count.toLocaleString()} providers</p>
-
-      {/* Top specialties in this city */}
-      <section className="mb-10">
-        <h2 className="text-lg font-semibold mb-4">Browse by Specialty in {decodedCity}</h2>
-        <div className="flex flex-wrap gap-2">
-          {topSpecialties.map((s) => (
-            <Link
-              key={s.code}
-              href={`/providers/${encodeURIComponent(s.description.toLowerCase())}/${city}`}
-              className="px-3 py-1.5 bg-blue-50 text-blue-700 text-sm rounded-full hover:bg-blue-100 transition-colors"
-            >
-              {s.description}
-            </Link>
-          ))}
-        </div>
-      </section>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">{decodedCity}, Texas</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          <span className="font-mono">{count.toLocaleString()}</span> healthcare providers
+        </p>
+      </div>
 
       <ProviderGrid providers={results.providers} />
 
       {results.totalPages > 1 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <Pagination
             currentPage={results.page}
             totalPages={results.totalPages}
             basePath={`/cities/${city}`}
+            maxPage={isPro ? undefined : FREE_SEARCH_MAX_PAGES}
           />
         </div>
       )}
     </div>
+    </>
   );
 }

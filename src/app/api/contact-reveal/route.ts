@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth/server';
 import { getProviderByNpi } from '@/lib/services/providers';
 import { getUserSubscriptionTier } from '@/lib/services/users';
-import { contactRevealRateLimit } from '@/lib/rate-limit';
 import { z } from 'zod/v4';
 
 const ContactRevealSchema = z.object({
@@ -19,12 +18,15 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Pro subscription required' }, { status: 403 });
   }
 
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'anonymous';
-
-  const { success } = await contactRevealRateLimit.limit(ip);
-  if (!success) {
-    return Response.json({ error: 'Rate limit exceeded' }, { status: 429 });
+  try {
+    const { contactRevealRateLimit } = await import('@/lib/rate-limit');
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'anonymous';
+    const { success } = await contactRevealRateLimit.limit(ip);
+    if (!success) {
+      return Response.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+  } catch {
+    // Rate limiting unavailable
   }
 
   const body = await request.json();

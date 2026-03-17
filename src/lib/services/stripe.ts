@@ -1,4 +1,4 @@
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import type Stripe from 'stripe';
 
 export async function createCheckoutSession({
@@ -14,7 +14,7 @@ export async function createCheckoutSession({
   successUrl: string;
   cancelUrl: string;
 }): Promise<Stripe.Checkout.Session> {
-  return stripe.checkout.sessions.create({
+  return getStripe().checkout.sessions.create({
     customer: customerId,
     mode,
     line_items: [{ price: priceId, quantity: 1 }],
@@ -30,7 +30,7 @@ export async function createPortalSession({
   customerId: string;
   returnUrl: string;
 }): Promise<Stripe.BillingPortal.Session> {
-  return stripe.billingPortal.sessions.create({
+  return getStripe().billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,
   });
@@ -39,7 +39,7 @@ export async function createPortalSession({
 export async function getSubscription(
   subscriptionId: string,
 ): Promise<Stripe.Subscription> {
-  return stripe.subscriptions.retrieve(subscriptionId);
+  return getStripe().subscriptions.retrieve(subscriptionId);
 }
 
 export async function createCustomer({
@@ -51,5 +51,5 @@ export async function createCustomer({
   name?: string;
   userId: string;
 }): Promise<Stripe.Customer> {
-  return stripe.customers.create({ email, name, metadata: { userId } });
+  return getStripe().customers.create({ email, name, metadata: { userId } });
 }

@@ -3,9 +3,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getProvidersByZip } from '@/lib/services/providers';
 import { getZipStats } from '@/lib/services/stats';
-import { createZipMetadata } from '@/lib/seo';
+import { createZipMetadata, breadcrumbJsonLd, BASE_URL } from '@/lib/seo';
 import { ProviderGrid } from '@/components/ProviderGrid';
 import { Pagination } from '@/components/Pagination';
+import { auth } from '@/lib/auth/server';
+import { getUserSubscriptionTier } from '@/lib/services/users';
+import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
 interface ZipPageProps {
   params: Promise<{ zip: string }>;
@@ -28,6 +31,17 @@ export default async function ZipPage({
 
   const page = pageParam ? parseInt(pageParam, 10) : 1;
 
+  let isPro = false;
+  try {
+    const { data: session } = await auth.getSession();
+    if (session?.user) {
+      const tier = await getUserSubscriptionTier(session.user.id);
+      isPro = tier === 'pro';
+    }
+  } catch {
+    // Auth unavailable
+  }
+
   const [results, count] = await Promise.all([
     getProvidersByZip(zip, page),
     getZipStats(zip),
@@ -38,38 +52,50 @@ export default async function ZipPage({
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <>
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd([
+        { name: 'Home', url: BASE_URL },
+        { name: `ZIP ${zip}`, url: `${BASE_URL}/zip/${zip}` },
+      ])) }}
+    />
+    <div className="max-w-5xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2">
+      <nav className="text-xs text-muted-foreground mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-1.5">
           <li>
-            <Link href="/" className="hover:text-blue-600">
+            <Link href="/" className="hover:text-foreground transition-colors">
               Home
             </Link>
           </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium">ZIP {zip}</li>
+          <li aria-hidden="true">/</li>
+          <li className="text-foreground">ZIP {zip}</li>
         </ol>
       </nav>
 
-      <h1 className="text-3xl font-bold mb-2">
-        Healthcare Providers in ZIP {zip}
-      </h1>
-      <p className="text-gray-600 mb-8">
-        {count.toLocaleString()} providers in this area
-      </p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Healthcare Providers in ZIP {zip}
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          <span className="font-mono">{count.toLocaleString()}</span> providers in this area
+        </p>
+      </div>
 
       <ProviderGrid providers={results.providers} />
 
       {results.totalPages > 1 && (
-        <div className="mt-8">
+        <div className="mt-6">
           <Pagination
             currentPage={results.page}
             totalPages={results.totalPages}
             basePath={`/zip/${zip}`}
+            maxPage={isPro ? undefined : FREE_SEARCH_MAX_PAGES}
           />
         </div>
       )}
     </div>
+    </>
   );
 }

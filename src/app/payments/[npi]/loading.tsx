@@ -1,16 +1,22 @@
-export default function Loading(): React.ReactNode {
+import { Skeleton } from '@/components/ui/skeleton';
+
+export default function PaymentsLoading(): React.ReactNode {
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="animate-pulse space-y-6">
-        <div className="h-4 bg-gray-200 rounded w-1/3" />
-        <div className="h-8 bg-gray-200 rounded w-1/2" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="h-24 bg-gray-200 rounded-xl" />
-          ))}
+    <div className="mx-auto max-w-5xl px-4 py-8">
+      <Skeleton className="h-4 w-48 mb-6" />
+      <Skeleton className="h-8 w-72 mb-2" />
+      <Skeleton className="h-4 w-56 mb-1" />
+      <Skeleton className="h-4 w-40 mb-6" />
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 mt-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Skeleton className="h-64 w-full rounded-sm" />
+          <Skeleton className="h-32 w-full rounded-sm" />
+          <Skeleton className="h-96 w-full rounded-sm" />
         </div>
-        <div className="h-48 bg-gray-200 rounded-xl" />
-        <div className="h-64 bg-gray-200 rounded-xl" />
+        <div className="space-y-5">
+          <Skeleton className="h-40 w-full rounded-sm" />
+        </div>
       </div>
     </div>
   );

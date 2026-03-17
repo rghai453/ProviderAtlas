@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth/server';
 import { getUserById } from '@/lib/services/users';
+import { Separator } from '@/components/ui/separator';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +25,9 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">Dashboard</h1>
-        <p className="text-gray-600">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1">
           Welcome back, {session.user.name ?? session.user.email}
         </p>
       </div>
@@ -34,10 +35,10 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
       {/* Plan badge */}
       <div className="mb-8">
         <span
-          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+          className={`inline-flex items-center gap-2 px-3 py-1 rounded-sm text-xs font-medium ${
             isPro
-              ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
-              : 'bg-gray-100 text-gray-700'
+              ? 'bg-emerald-600/10 text-emerald-600 ring-1 ring-inset ring-emerald-600/20'
+              : 'bg-muted text-muted-foreground'
           }`}
         >
           {isPro ? 'Pro Plan' : 'Free Plan'}
@@ -45,23 +46,23 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
         {!isPro && (
           <Link
             href="/pricing"
-            className="ml-3 text-sm text-blue-600 hover:text-blue-800 font-medium"
+            className="ml-3 text-xs text-emerald-600 hover:text-emerald-700 font-medium"
           >
-            Upgrade to Pro →
+            Upgrade to Pro
           </Link>
         )}
       </div>
 
       {/* Quick links grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-1">
         <Link
           href="/dashboard/saved-searches"
-          className="group p-6 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all"
+          className="group p-5 border border-border rounded-sm hover:bg-muted/20 transition-colors"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center">
               <svg
-                className="w-4 h-4 text-blue-600"
+                className="w-4 h-4 text-muted-foreground"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -75,21 +76,21 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
                 />
               </svg>
             </div>
-            <h2 className="font-semibold text-gray-900 group-hover:text-blue-700">
+            <h2 className="text-sm font-semibold text-foreground group-hover:text-emerald-600">
               Saved Searches
             </h2>
           </div>
-          <p className="text-sm text-gray-500">View and re-run your saved provider searches.</p>
+          <p className="text-xs text-muted-foreground">View and re-run your saved provider searches.</p>
         </Link>
 
         <Link
           href="/dashboard/alerts"
-          className="group p-6 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all"
+          className="group p-5 border border-border rounded-sm hover:bg-muted/20 transition-colors"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center">
               <svg
-                className="w-4 h-4 text-amber-600"
+                className="w-4 h-4 text-muted-foreground"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -103,21 +104,21 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
                 />
               </svg>
             </div>
-            <h2 className="font-semibold text-gray-900 group-hover:text-blue-700">Alerts</h2>
+            <h2 className="text-sm font-semibold text-foreground group-hover:text-emerald-600">Alerts</h2>
           </div>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-muted-foreground">
             Get notified when new providers match your criteria.
           </p>
         </Link>
 
         <Link
           href="/dashboard/billing"
-          className="group p-6 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all"
+          className="group p-5 border border-border rounded-sm hover:bg-muted/20 transition-colors"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-muted rounded-sm flex items-center justify-center">
               <svg
-                className="w-4 h-4 text-green-600"
+                className="w-4 h-4 text-muted-foreground"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -131,33 +132,34 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
                 />
               </svg>
             </div>
-            <h2 className="font-semibold text-gray-900 group-hover:text-blue-700">Billing</h2>
+            <h2 className="text-sm font-semibold text-foreground group-hover:text-emerald-600">Billing</h2>
           </div>
-          <p className="text-sm text-gray-500">Manage your subscription and payment method.</p>
+          <p className="text-xs text-muted-foreground">Manage your subscription and payment method.</p>
         </Link>
       </div>
 
       {/* Quick actions */}
-      <div className="mt-8 pt-8 border-t border-gray-100">
-        <h2 className="font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-3">
+      <Separator className="my-8" />
+      <div>
+        <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">Quick Actions</h2>
+        <div className="flex flex-wrap gap-2">
           <Link
             href="/providers"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-emerald-600 text-white rounded-sm hover:bg-emerald-700 transition-colors text-xs font-medium"
           >
             Search Providers
           </Link>
           <Link
             href="/specialties"
-            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium"
+            className="px-4 py-2 border border-border text-foreground rounded-sm hover:bg-muted/20 transition-colors text-xs font-medium"
           >
             Browse Specialties
           </Link>
           <Link
-            href="/data"
-            className="px-4 py-2 border border-gray-200 text-gray-700 rounded-lg hover:border-gray-300 hover:bg-gray-50 transition-colors text-sm font-medium"
+            href="/rankings"
+            className="px-4 py-2 border border-border text-foreground rounded-sm hover:bg-muted/20 transition-colors text-xs font-medium"
           >
-            Data Lists
+            Rankings
           </Link>
         </div>
       </div>

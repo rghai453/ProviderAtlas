@@ -36,6 +36,9 @@ yarn-error.log*
 # raw data
 scripts/raw/
 scripts/normalized/
+Medicare Part D Prescribers - by Provider and Drug/
+Medicare Physician & Other Practitioners - by Provider and Service/
+ec_score_file.csv
 
 # vercel
 .vercel

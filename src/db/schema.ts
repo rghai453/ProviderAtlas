@@ -7,6 +7,8 @@ import {
   boolean,
   varchar,
   pgEnum,
+  numeric,
+  uniqueIndex,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
@@ -50,17 +52,6 @@ export const alerts = pgTable('alerts', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
-// Data Lists (pre-built CSV products)
-export const dataLists = pgTable('data_lists', {
-  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  name: text('name').notNull(),
-  description: text('description'),
-  recordCount: integer('record_count').notNull().default(0),
-  price: integer('price').notNull(), // cents
-  stripePriceId: text('stripe_price_id'),
-  slug: text('slug').notNull().unique(),
-});
-
 // Specialties
 export const specialties = pgTable('specialties', {
   code: varchar('code', { length: 20 }).primaryKey(),
@@ -91,6 +82,7 @@ export const providers = pgTable('providers', {
   state: varchar('state', { length: 2 }),
   zip: varchar('zip', { length: 10 }),
   county: text('county'),
+  acceptsMedicare: boolean('accepts_medicare').notNull().default(false),
   enumerationDate: timestamp('enumeration_date', { withTimezone: true }),
   lastUpdated: timestamp('last_updated', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -131,6 +123,56 @@ export const facilities = pgTable('facilities', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Medicare Utilization (Medicare Physician & Other Practitioners by Provider and Service)
+export const medicareUtilization = pgTable('medicare_utilization', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  providerNpi: varchar('provider_npi', { length: 10 })
+    .notNull()
+    .references(() => providers.npi, { onDelete: 'cascade' }),
+  hcpcsCode: varchar('hcpcs_code', { length: 10 }).notNull(),
+  hcpcsDescription: text('hcpcs_description'),
+  placeOfService: varchar('place_of_service', { length: 1 }),
+  totalBeneficiaries: integer('total_beneficiaries'),
+  totalServices: numeric('total_services', { precision: 12, scale: 2 }),
+  totalMedicarePayment: integer('total_medicare_payment'), // cents
+  avgMedicarePayment: integer('avg_medicare_payment'), // cents
+  programYear: integer('program_year'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Prescriber Data (Medicare Part D Prescribers by Provider and Drug)
+export const prescriberData = pgTable('prescriber_data', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  providerNpi: varchar('provider_npi', { length: 10 })
+    .notNull()
+    .references(() => providers.npi, { onDelete: 'cascade' }),
+  brandName: text('brand_name'),
+  genericName: text('generic_name').notNull(),
+  totalClaims: numeric('total_claims', { precision: 12, scale: 2 }),
+  totalDrugCost: integer('total_drug_cost'), // cents
+  totalBeneficiaries: integer('total_beneficiaries'),
+  programYear: integer('program_year'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// MIPS Performance Scores
+export const mipsScores = pgTable('performance_scores', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  providerNpi: varchar('provider_npi', { length: 10 })
+    .notNull()
+    .references(() => providers.npi, { onDelete: 'cascade' }),
+  finalScore: numeric('final_score', { precision: 6, scale: 2 }),
+  qualityScore: numeric('quality_score', { precision: 6, scale: 2 }),
+  promotingInteroperabilityScore: numeric('promoting_interoperability_score', { precision: 6, scale: 2 }),
+  improvementActivitiesScore: numeric('improvement_activities_score', { precision: 6, scale: 2 }),
+  costScore: numeric('cost_score', { precision: 6, scale: 2 }),
+  programYear: integer('program_year').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  npiYearUnique: uniqueIndex('perf_scores_npi_year_unique').on(table.providerNpi, table.programYear),
+}));
+
 // Stats (precomputed)
 export const stats = pgTable('stats', {
   key: text('key').primaryKey(),
@@ -145,6 +187,9 @@ export const providersRelations = relations(providers, ({ one, many }) => ({
     references: [specialties.code],
   }),
   payments: many(payments),
+  medicareUtilization: many(medicareUtilization),
+  prescriberData: many(prescriberData),
+  mipsScores: many(mipsScores),
 }));
 
 export const specialtiesRelations = relations(specialties, ({ many }) => ({
@@ -177,6 +222,27 @@ export const alertsRelations = relations(alerts, ({ one }) => ({
   }),
 }));
 
+export const medicareUtilizationRelations = relations(medicareUtilization, ({ one }) => ({
+  provider: one(providers, {
+    fields: [medicareUtilization.providerNpi],
+    references: [providers.npi],
+  }),
+}));
+
+export const prescriberDataRelations = relations(prescriberData, ({ one }) => ({
+  provider: one(providers, {
+    fields: [prescriberData.providerNpi],
+    references: [providers.npi],
+  }),
+}));
+
+export const mipsScoresRelations = relations(mipsScores, ({ one }) => ({
+  provider: one(providers, {
+    fields: [mipsScores.providerNpi],
+    references: [providers.npi],
+  }),
+}));
+
 // Zod schemas
 export const insertProviderSchema = createInsertSchema(providers);
 export const selectProviderSchema = createSelectSchema(providers);
@@ -187,4 +253,3 @@ export const selectUserSchema = createSelectSchema(users);
 export const insertAlertSchema = createInsertSchema(alerts);
 export const selectAlertSchema = createSelectSchema(alerts);
 export const insertSavedSearchSchema = createInsertSchema(savedSearches);
-export const insertDataListSchema = createInsertSchema(dataLists);

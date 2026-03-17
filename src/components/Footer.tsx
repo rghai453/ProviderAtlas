@@ -1,41 +1,41 @@
 import Link from 'next/link';
 
-const FOOTER_LINKS = [
-  { label: 'About', href: '/about' },
-  { label: 'Privacy', href: '/privacy' },
-  { label: 'Terms', href: '/terms' },
-  { label: 'Contact', href: '/contact' },
+const NAV_LINKS = [
+  { label: 'Providers', href: '/providers' },
+  { label: 'Specialties', href: '/specialties' },
+  { label: 'Cities', href: '/cities' },
+  { label: 'New Providers', href: '/new-providers' },
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Rankings', href: '/rankings' },
 ] as const;
 
 export function Footer(): React.ReactNode {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-gray-800 bg-gray-900 text-gray-400">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-          {/* Brand */}
-          <div className="flex flex-col gap-2">
-            <Link
-              href="/"
-              className="text-base font-bold tracking-tight text-white hover:text-blue-400"
-            >
-              ProviderAtlas
-            </Link>
-            <p className="max-w-xs text-sm text-gray-500">
-              Texas healthcare provider intelligence — NPI registry and Open Payments data in one
-              place.
-            </p>
-          </div>
-
-          {/* Nav links */}
+    <footer className="border-t border-border bg-muted/30">
+      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+        {/* Row 1: Logo + nav links */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Link
+            href="/"
+            className="text-xs font-semibold uppercase tracking-tight text-foreground hover:text-primary transition-colors"
+            style={{ letterSpacing: '-0.025em' }}
+          >
+            PROVIDERATLAS
+          </Link>
           <nav aria-label="Footer navigation">
-            <ul className="flex flex-wrap gap-x-6 gap-y-2">
-              {FOOTER_LINKS.map((link) => (
-                <li key={link.href}>
+            <ul className="flex flex-wrap items-center gap-x-1 gap-y-1">
+              {NAV_LINKS.map((link, i) => (
+                <li key={link.href} className="flex items-center">
+                  {i > 0 && (
+                    <span className="mr-1 text-xs text-muted-foreground/40" aria-hidden="true">
+                      ·
+                    </span>
+                  )}
                   <Link
                     href={link.href}
-                    className="text-sm transition-colors hover:text-white"
+                    className="text-xs uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
                   >
                     {link.label}
                   </Link>
@@ -45,31 +45,15 @@ export function Footer(): React.ReactNode {
           </nav>
         </div>
 
-        {/* Trust badge */}
-        <div className="mt-8 flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800/50 px-4 py-3 text-xs text-gray-400">
-          <svg
-            className="h-4 w-4 shrink-0 text-green-500"
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path
-              fillRule="evenodd"
-              d="M12 1.5a5.25 5.25 0 00-5.25 5.25v3a3 3 0 00-3 3v6.75a3 3 0 003 3h10.5a3 3 0 003-3v-6.75a3 3 0 00-3-3v-3A5.25 5.25 0 0012 1.5zm-3.75 8.25v-3a3.75 3.75 0 117.5 0v3h-7.5z"
-              clipRule="evenodd"
-            />
-          </svg>
-          <span>
-            Data sourced from the CMS National Provider Identifier (NPI) Registry and CMS Open
-            Payments database. Updated regularly.
-          </span>
+        {/* Row 2: Data attribution + copyright */}
+        <div className="mt-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground/60">
+            Data sourced from CMS National Plan &amp; Provider Enumeration System and Open Payments
+          </p>
+          <p className="text-xs text-muted-foreground/60">
+            &copy; {year} ProviderAtlas
+          </p>
         </div>
-
-        {/* Copyright */}
-        <p className="mt-6 text-center text-xs text-gray-600">
-          &copy; {year} ProviderAtlas. All rights reserved.
-        </p>
       </div>
     </footer>
   );

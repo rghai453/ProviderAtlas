@@ -2,7 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getProviderByNpi } from '@/lib/services/providers';
-import { getPaymentsByProvider } from '@/lib/services/payments';
+import { getPaymentsByProvider, getPaymentSummaryByProvider } from '@/lib/services/payments';
+import { createPaymentsMetadata, breadcrumbJsonLd, BASE_URL } from '@/lib/seo';
+import { PaymentHeatBadge } from '@/components/PaymentHeatBadge';
+import { Separator } from '@/components/ui/separator';
 
 interface PaymentsPageProps {
   params: Promise<{ npi: string }>;
@@ -13,7 +16,7 @@ export async function generateMetadata({ params }: PaymentsPageProps): Promise<M
   const provider = await getProviderByNpi(npi);
 
   if (!provider) {
-    return { title: 'Payment History | ProviderAtlas' };
+    return { title: 'Provider Not Found | ProviderAtlas' };
   }
 
   const name =
@@ -21,23 +24,37 @@ export async function generateMetadata({ params }: PaymentsPageProps): Promise<M
       ? (provider.organizationName ?? 'Unknown Organization')
       : [provider.firstName, provider.lastName].filter(Boolean).join(' ') || 'Unknown Provider';
 
-  const title = `${name} — Pharma Payment History | ProviderAtlas`;
-  const description = `View all pharmaceutical and medical device company payments received by ${name} (NPI: ${npi}). Full Open Payments disclosure data.`;
+  const allPayments = provider.payments ?? [];
+  const totalAmount = allPayments.reduce((sum, p) => sum + (p.amount ?? 0), 0) / 100;
 
-  return {
-    title,
-    description,
-    openGraph: { title, description, siteName: 'ProviderAtlas' },
-    twitter: { card: 'summary', title, description },
-  };
+  return createPaymentsMetadata({
+    name,
+    npi: provider.npi,
+    totalAmount,
+    transactionCount: allPayments.length,
+  });
+}
+
+function formatCurrency(cents: number): string {
+  return `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}
+
+function formatDate(date: Date | null): string {
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  });
 }
 
 export default async function PaymentsPage({ params }: PaymentsPageProps): Promise<React.ReactNode> {
   const { npi } = await params;
 
-  const [provider, payments] = await Promise.all([
+  const [provider, allPayments, summary] = await Promise.all([
     getProviderByNpi(npi),
     getPaymentsByProvider(npi),
+    getPaymentSummaryByProvider(npi),
   ]);
 
   if (!provider) {
@@ -49,142 +66,141 @@ export default async function PaymentsPage({ params }: PaymentsPageProps): Promi
       ? (provider.organizationName ?? 'Unknown Organization')
       : [provider.firstName, provider.lastName].filter(Boolean).join(' ') || 'Unknown Provider';
 
-  const totalAmount = payments.reduce((sum, p) => sum + Number(p.amount ?? 0), 0);
-
-  // Group payments by year
-  const byYear = payments.reduce<Record<string, typeof payments>>((acc, payment) => {
-    if (!payment.dateOfPayment) return acc;
-    const year = new Date(payment.dateOfPayment).getFullYear().toString();
-    if (!acc[year]) acc[year] = [];
-    acc[year].push(payment);
-    return acc;
-  }, {});
-
-  const years = Object.keys(byYear).sort((a, b) => Number(b) - Number(a));
+  const totalAmount = allPayments.reduce((sum, p) => sum + (p.amount ?? 0), 0);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8">
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd([
+          { name: 'Home', url: BASE_URL },
+          { name: displayName, url: `${BASE_URL}/provider/${provider.npi}` },
+          { name: 'Payments', url: `${BASE_URL}/payments/${provider.npi}` },
+        ])) }}
+      />
+    <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2">
+      <nav className="mb-6 text-xs text-muted-foreground" aria-label="Breadcrumb">
+        <ol className="flex flex-wrap items-center gap-1.5">
+          <li><Link href="/" className="hover:text-foreground transition-colors">Home</Link></li>
+          <li aria-hidden="true">/</li>
           <li>
-            <Link href="/" className="hover:text-blue-600">
-              Home
-            </Link>
-          </li>
-          <li>/</li>
-          <li>
-            <Link href={`/provider/${npi}`} className="hover:text-blue-600">
+            <Link
+              href={`/provider/${provider.npi}`}
+              className="hover:text-foreground transition-colors"
+            >
               {displayName}
             </Link>
           </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium">Payment History</li>
+          <li aria-hidden="true">/</li>
+          <li className="text-foreground">Payments</li>
         </ol>
       </nav>
 
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">{displayName}</h1>
-        <p className="text-gray-600">Pharmaceutical &amp; Medical Device Payment History</p>
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
+          {totalAmount > 0 && <PaymentHeatBadge totalPayments={totalAmount / 100} />}
+        </div>
+        {provider.specialtyDescription && (
+          <p className="mt-1 text-sm text-muted-foreground">{provider.specialtyDescription}</p>
+        )}
+        <p className="mt-1 text-sm text-muted-foreground">
+          <span className="font-mono">{formatCurrency(totalAmount)}</span> total across{' '}
+          <span className="font-mono">{allPayments.length.toLocaleString()}</span> transactions
+        </p>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Total Received</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            ${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Total Transactions</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {payments.length.toLocaleString()}
-          </p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
-          <p className="text-sm text-gray-500">Years on Record</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{years.length}</p>
-        </div>
-      </div>
+      <Separator />
 
-      {payments.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-          <p className="text-gray-600">No payment records found for this provider.</p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* By-year breakdown */}
-          <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <h2 className="text-lg font-semibold mb-4">Payments by Year</h2>
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="text-left py-2 text-gray-500 font-medium">Year</th>
-                  <th className="text-right py-2 text-gray-500 font-medium">Transactions</th>
-                  <th className="text-right py-2 text-gray-500 font-medium">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {years.map((year) => {
-                  const yearPayments = byYear[year];
-                  const yearTotal = yearPayments.reduce(
-                    (sum, p) => sum + Number(p.amount ?? 0),
-                    0,
-                  );
-                  return (
-                    <tr key={year} className="border-b border-gray-50">
-                      <td className="py-3 font-medium text-gray-900">{year}</td>
-                      <td className="py-3 text-right text-gray-600">
-                        {yearPayments.length.toLocaleString()}
-                      </td>
-                      <td className="py-3 text-right font-medium text-gray-900">
-                        ${yearTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 mt-6">
+        {/* Main content */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* By Company */}
+          {summary.byCompany.length > 0 && (
+            <div>
+              <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+                Payments by Company
+              </h2>
+              <div className="border border-border rounded-sm overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left px-3 py-2 font-medium text-muted-foreground">Company</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Transactions</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Total</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Full payment table */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-semibold">All Payments</h2>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {summary.byCompany.map((row) => (
+                      <tr key={row.payerName}>
+                        <td className="px-3 py-2 font-medium">{row.payerName}</td>
+                        <td className="px-3 py-2 text-right font-mono">{row.transactionCount.toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right font-mono">{formatCurrency(row.totalAmount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-6 py-3 text-gray-500 font-medium">Date</th>
-                    <th className="text-left px-6 py-3 text-gray-500 font-medium">Payer</th>
-                    <th className="text-left px-6 py-3 text-gray-500 font-medium">Nature</th>
-                    <th className="text-right px-6 py-3 text-gray-500 font-medium">Amount</th>
+          )}
+
+          {/* By Year */}
+          {summary.byYear.length > 0 && (
+            <div>
+              <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+                Payments by Year
+              </h2>
+              <div className="border border-border rounded-sm overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="text-left px-3 py-2 font-medium text-muted-foreground">Year</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Transactions</th>
+                      <th className="text-right px-3 py-2 font-medium text-muted-foreground">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {summary.byYear.map((row) => (
+                      <tr key={row.year}>
+                        <td className="px-3 py-2 font-mono">{row.year}</td>
+                        <td className="px-3 py-2 text-right font-mono">{row.transactionCount.toLocaleString()}</td>
+                        <td className="px-3 py-2 text-right font-mono">{formatCurrency(row.totalAmount)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          <Separator />
+
+          {/* All Transactions */}
+          <div>
+            <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground mb-4">
+              All Transactions ({allPayments.length.toLocaleString()})
+            </h2>
+            <div className="border border-border rounded-sm overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Date</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Company</th>
+                    <th className="text-left px-3 py-2 font-medium text-muted-foreground">Nature</th>
+                    <th className="text-right px-3 py-2 font-medium text-muted-foreground">Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {payments.map((payment) => (
-                    <tr key={payment.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-3 text-gray-600">
-                        {payment.dateOfPayment
-                          ? new Date(payment.dateOfPayment).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })
-                          : '—'}
+                <tbody className="divide-y divide-border">
+                  {allPayments.map((payment) => (
+                    <tr key={payment.id}>
+                      <td className="px-3 py-2 font-mono text-muted-foreground whitespace-nowrap">
+                        {formatDate(payment.dateOfPayment)}
                       </td>
-                      <td className="px-6 py-3 text-gray-900">{payment.payerName ?? '—'}</td>
-                      <td className="px-6 py-3 text-gray-600">
-                        {payment.natureOfPayment ?? '—'}
-                      </td>
-                      <td className="px-6 py-3 text-right font-medium text-gray-900">
-                        ${Number(payment.amount ?? 0).toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </td>
+                      <td className="px-3 py-2">{payment.payerName}</td>
+                      <td className="px-3 py-2 text-muted-foreground">{payment.natureOfPayment ?? '—'}</td>
+                      <td className="px-3 py-2 text-right font-mono">{formatCurrency(payment.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -192,13 +208,45 @@ export default async function PaymentsPage({ params }: PaymentsPageProps): Promi
             </div>
           </div>
         </div>
-      )}
 
-      <div className="mt-8">
-        <Link href={`/provider/${npi}`} className="text-blue-600 hover:text-blue-800 text-sm">
-          ← Back to {displayName}&apos;s profile
-        </Link>
+        {/* Sidebar */}
+        <aside className="space-y-5">
+          <div className="border border-border rounded-sm">
+            <div className="px-4 py-3 border-b border-border">
+              <h2 className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Summary</h2>
+            </div>
+            <dl className="divide-y divide-border">
+              <div className="flex justify-between px-4 py-2.5">
+                <dt className="text-xs text-muted-foreground">NPI</dt>
+                <dd className="font-mono text-xs">{provider.npi}</dd>
+              </div>
+              <div className="flex justify-between px-4 py-2.5">
+                <dt className="text-xs text-muted-foreground">Total received</dt>
+                <dd className="font-mono text-xs">{formatCurrency(totalAmount)}</dd>
+              </div>
+              <div className="flex justify-between px-4 py-2.5">
+                <dt className="text-xs text-muted-foreground">Transactions</dt>
+                <dd className="font-mono text-xs">{allPayments.length.toLocaleString()}</dd>
+              </div>
+              <div className="flex justify-between px-4 py-2.5">
+                <dt className="text-xs text-muted-foreground">Companies</dt>
+                <dd className="font-mono text-xs">{summary.byCompany.length}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className="px-4 py-3 border border-border rounded-sm text-center">
+            <p className="text-xs text-muted-foreground">Data from CMS Open Payments</p>
+            <Link
+              href={`/provider/${provider.npi}`}
+              className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
+            >
+              View full profile
+            </Link>
+          </div>
+        </aside>
       </div>
     </div>
+    </>
   );
 }

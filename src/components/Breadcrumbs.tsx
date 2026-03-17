@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 interface BreadcrumbItem {
   label: string;
@@ -12,32 +13,20 @@ interface BreadcrumbsProps {
 export function Breadcrumbs({ items }: BreadcrumbsProps): React.ReactNode {
   return (
     <nav aria-label="Breadcrumb">
-      <ol className="flex flex-wrap items-center gap-1 text-sm text-gray-500">
+      <ol className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
 
           return (
             <li key={index} className="flex items-center gap-1">
               {index > 0 && (
-                <svg
-                  className="h-3.5 w-3.5 shrink-0 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  aria-hidden="true"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
+                <span className="text-muted-foreground/50" aria-hidden="true">
+                  /
+                </span>
               )}
               {isLast || !item.href ? (
                 <span
-                  className={
-                    isLast
-                      ? 'font-medium text-gray-900'
-                      : 'text-gray-500'
-                  }
+                  className={cn(isLast ? 'font-medium text-foreground' : 'text-muted-foreground')}
                   aria-current={isLast ? 'page' : undefined}
                 >
                   {item.label}
@@ -45,7 +34,7 @@ export function Breadcrumbs({ items }: BreadcrumbsProps): React.ReactNode {
               ) : (
                 <Link
                   href={item.href}
-                  className="transition-colors hover:text-gray-900 hover:underline"
+                  className="transition-colors hover:text-foreground hover:underline"
                 >
                   {item.label}
                 </Link>

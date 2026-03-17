@@ -26,46 +26,44 @@ export default async function BillingPage(): Promise<React.ReactNode> {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       {/* Breadcrumb */}
-      <nav className="text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
-        <ol className="flex items-center gap-2">
+      <nav className="text-xs text-muted-foreground mb-6" aria-label="Breadcrumb">
+        <ol className="flex items-center gap-1.5">
           <li>
-            <Link href="/dashboard" className="hover:text-blue-600">
+            <Link href="/dashboard" className="hover:text-foreground transition-colors">
               Dashboard
             </Link>
           </li>
-          <li>/</li>
-          <li className="text-gray-900 font-medium">Billing</li>
+          <li aria-hidden="true">/</li>
+          <li className="text-foreground">Billing</li>
         </ol>
       </nav>
 
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-1">Billing</h1>
-        <p className="text-gray-600">Manage your plan and payment details.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Billing</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage your plan and payment details.</p>
       </div>
 
       {/* Current plan card */}
-      <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+      <div className="border border-border rounded-sm p-6 mb-6">
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="font-semibold text-gray-900 mb-1">Current Plan</h2>
-            <div className="flex items-center gap-2">
-              <span
-                className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  isPro
-                    ? 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20'
-                    : 'bg-gray-100 text-gray-700'
-                }`}
-              >
-                {isPro ? 'Pro — $29/month' : 'Free'}
-              </span>
-            </div>
+            <h2 className="text-sm font-semibold text-foreground mb-2">Current Plan</h2>
+            <span
+              className={`inline-flex items-center px-3 py-1 rounded-sm text-xs font-medium ${
+                isPro
+                  ? 'bg-emerald-600/10 text-emerald-600 ring-1 ring-inset ring-emerald-600/20'
+                  : 'bg-muted text-muted-foreground'
+              }`}
+            >
+              {isPro ? 'Pro — $29/month' : 'Free'}
+            </span>
           </div>
           {isPro ? (
             <ManageSubscriptionButton />
           ) : (
             <Link
               href="/pricing"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-emerald-600 text-white rounded-sm hover:bg-emerald-700 transition-colors text-xs font-medium"
             >
               Upgrade to Pro
             </Link>
@@ -73,8 +71,8 @@ export default async function BillingPage(): Promise<React.ReactNode> {
         </div>
 
         {isPro && (
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <p className="text-sm text-gray-500">
+          <div className="mt-4 pt-4 border-t border-border">
+            <p className="text-xs text-muted-foreground">
               Your subscription renews monthly. Use the button above to update your payment
               method, download invoices, or cancel.
             </p>
@@ -84,9 +82,9 @@ export default async function BillingPage(): Promise<React.ReactNode> {
 
       {/* Plan features */}
       {!isPro && (
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6">
-          <h2 className="font-semibold text-blue-900 mb-3">Unlock with Pro</h2>
-          <ul className="space-y-2 text-sm text-blue-800">
+        <div className="border border-border rounded-sm p-6">
+          <h2 className="text-sm font-semibold text-foreground mb-3">Unlock with Pro</h2>
+          <ul className="space-y-2 text-xs text-muted-foreground">
             {[
               'Full contact information (phone, fax)',
               'CSV exports — unlimited downloads',
@@ -96,7 +94,7 @@ export default async function BillingPage(): Promise<React.ReactNode> {
             ].map((feature) => (
               <li key={feature} className="flex items-center gap-2">
                 <svg
-                  className="h-4 w-4 text-blue-600 shrink-0"
+                  className="h-3.5 w-3.5 text-emerald-600 shrink-0"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 20 20"
                   fill="currentColor"
@@ -113,9 +111,9 @@ export default async function BillingPage(): Promise<React.ReactNode> {
           </ul>
           <Link
             href="/pricing"
-            className="mt-4 inline-flex px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="mt-4 inline-flex px-4 py-2 bg-emerald-600 text-white rounded-sm hover:bg-emerald-700 transition-colors text-xs font-medium"
           >
-            View Pricing →
+            View Pricing
           </Link>
         </div>
       )}

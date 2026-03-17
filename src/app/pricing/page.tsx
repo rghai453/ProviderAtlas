@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PricingTable } from '@/components/PricingTable';
+import { faqJsonLd } from '@/lib/seo';
 
 export const metadata: Metadata = {
   title: 'Pricing — ProviderAtlas',
@@ -18,23 +19,42 @@ export const metadata: Metadata = {
   },
 };
 
+const pricingFaqs = faqJsonLd([
+  {
+    question: 'How much does ProviderAtlas cost?',
+    answer: 'ProviderAtlas is free to browse. Pro is $29/month for contact details, full data breakdowns, CSV exports, saved searches, and email alerts.',
+  },
+  {
+    question: "What's included in the free tier?",
+    answer: 'Browse all 280,000+ Texas providers, view summary stats, top 3 prescriptions, payment summaries, and MIPS final scores.',
+  },
+  {
+    question: 'Can I cancel anytime?',
+    answer: 'Yes. Pro is month-to-month with no contract. Cancel anytime from your dashboard.',
+  },
+  {
+    question: 'What payment methods do you accept?',
+    answer: 'We accept all major credit cards via Stripe.',
+  },
+]);
+
 export default function PricingPage(): React.ReactNode {
   return (
-    <div className="max-w-5xl mx-auto px-4 py-16">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
-        <p className="text-lg text-gray-600">
-          Start free. Upgrade when you need more.
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(pricingFaqs) }}
+      />
+      <div className="mx-auto max-w-3xl px-4 py-12">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Pricing</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Free to browse. Upgrade for contact details, exports, and alerts.
         </p>
       </div>
 
       <PricingTable />
-
-      <p className="text-center text-sm text-gray-500 mt-8">
-        All plans include access to the NPI registry and Open Payments data.
-        <br />
-        Cancel anytime. No hidden fees.
-      </p>
-    </div>
+      </div>
+    </>
   );
 }

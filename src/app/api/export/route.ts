@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth/server';
 import { generateExportCsv } from '@/lib/services/exports';
 import { getUserSubscriptionTier } from '@/lib/services/users';
-import { exportRateLimit } from '@/lib/rate-limit';
 import { exportFiltersSchema } from '@/lib/validations/exports';
 
 export async function POST(request: Request): Promise<Response> {
@@ -15,12 +14,15 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ error: 'Pro subscription required' }, { status: 403 });
   }
 
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'anonymous';
-
-  const { success } = await exportRateLimit.limit(ip);
-  if (!success) {
-    return Response.json({ error: 'Rate limit exceeded' }, { status: 429 });
+  try {
+    const { exportRateLimit } = await import('@/lib/rate-limit');
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'anonymous';
+    const { success } = await exportRateLimit.limit(ip);
+    if (!success) {
+      return Response.json({ error: 'Rate limit exceeded' }, { status: 429 });
+    }
+  } catch {
+    // Rate limiting unavailable
   }
 
   const body = await request.json();

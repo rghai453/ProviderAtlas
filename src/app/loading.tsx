@@ -1,15 +1,29 @@
+import { Skeleton } from '@/components/ui/skeleton';
+
 export default function Loading(): React.ReactNode {
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="animate-pulse space-y-4">
-        <div className="h-64 bg-gray-200 rounded-xl" />
-        <div className="h-8 bg-gray-200 rounded w-1/3" />
-        <div className="h-4 bg-gray-200 rounded w-2/3" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-48 bg-gray-200 rounded-lg" />
-          ))}
-        </div>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      {/* Hero skeleton */}
+      <Skeleton className="h-64 w-full rounded-xl" />
+
+      {/* Stats row */}
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <Skeleton key={i} className="h-24 rounded-xl" />
+        ))}
+      </div>
+
+      {/* Section heading */}
+      <div className="mt-12 space-y-2">
+        <Skeleton className="h-7 w-48 rounded" />
+        <Skeleton className="h-4 w-72 rounded" />
+      </div>
+
+      {/* Card grid */}
+      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-44 rounded-xl" />
+        ))}
       </div>
     </div>
   );

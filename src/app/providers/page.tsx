@@ -3,12 +3,16 @@ import { searchProviders } from '@/lib/services/providers';
 import { FilterPanel } from '@/components/FilterPanel';
 import { ProviderGrid } from '@/components/ProviderGrid';
 import { Pagination } from '@/components/Pagination';
+import { auth } from '@/lib/auth/server';
+import { getUserSubscriptionTier } from '@/lib/services/users';
+import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
 interface SearchParams {
   specialty?: string;
   city?: string;
   zip?: string;
   name?: string;
+  medicare?: string;
   page?: string;
 }
 
@@ -44,19 +48,31 @@ export default async function ProvidersPage({
   const params = await searchParams;
   const page = params.page ? parseInt(params.page, 10) : 1;
 
+  let isPro = false;
+  try {
+    const { data: session } = await auth.getSession();
+    if (session?.user) {
+      const tier = await getUserSubscriptionTier(session.user.id);
+      isPro = tier === 'pro';
+    }
+  } catch {
+    // Auth unavailable
+  }
+
   const results = await searchProviders({
     specialty: params.specialty,
     city: params.city,
     zip: params.zip,
     name: params.name,
+    medicare: params.medicare === '1',
     page,
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-2">Texas Healthcare Providers</h1>
-      <p className="text-gray-600 mb-8">
-        {results.total.toLocaleString()} providers found
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold tracking-tight mb-1">Texas Healthcare Providers</h1>
+      <p className="text-sm text-muted-foreground mb-6">
+        <span className="font-mono">{results.total.toLocaleString()}</span> providers found
       </p>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -80,6 +96,7 @@ export default async function ProvidersPage({
                   zip: params.zip,
                   name: params.name,
                 }}
+                maxPage={isPro ? undefined : FREE_SEARCH_MAX_PAGES}
               />
             </div>
           )}

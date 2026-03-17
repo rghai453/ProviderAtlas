@@ -1,6 +1,51 @@
 import type { Metadata } from 'next';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://provideratlas.com';
+export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://provideratlas.com';
+
+export interface BreadcrumbItem {
+  name: string;
+  url: string;
+}
+
+export function breadcrumbJsonLd(items: BreadcrumbItem[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: item.name,
+      item: item.url,
+    })),
+  };
+}
+
+export function organizationJsonLd(): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'ProviderAtlas',
+    url: BASE_URL,
+    description: 'Texas Healthcare Provider Intelligence — search 300,000+ providers with cross-referenced NPI, Open Payments, Medicare, and prescriber data.',
+  };
+}
+
+export function websiteJsonLd(): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'ProviderAtlas',
+    url: BASE_URL,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${BASE_URL}/providers?name={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  };
+}
 
 export function createProviderMetadata({
   name,
@@ -96,6 +141,68 @@ export function createZipMetadata({
   };
 }
 
+export function createPaymentsMetadata({
+  name,
+  npi,
+  totalAmount,
+  transactionCount,
+}: {
+  name: string;
+  npi: string;
+  totalAmount: number;
+  transactionCount: number;
+}): Metadata {
+  const amountStr = `$${totalAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  const title = `${name} — ${amountStr} in Pharma Payments | ProviderAtlas`;
+  const description = `${name} received ${amountStr} across ${transactionCount.toLocaleString()} pharma payment transactions. View full Open Payments breakdown by company and year. NPI: ${npi}.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `${BASE_URL}/payments/${npi}`,
+      siteName: 'ProviderAtlas',
+    },
+    twitter: { card: 'summary', title, description },
+    alternates: { canonical: `${BASE_URL}/payments/${npi}` },
+  };
+}
+
+export function createRankingsMetadata({
+  title,
+  description,
+  path,
+}: {
+  title: string;
+  description: string;
+  path: string;
+}): Metadata {
+  return {
+    title,
+    description,
+    openGraph: { title, description, url: `${BASE_URL}${path}`, siteName: 'ProviderAtlas' },
+    twitter: { card: 'summary', title, description },
+    alternates: { canonical: `${BASE_URL}${path}` },
+  };
+}
+
+export function faqJsonLd(faqs: { question: string; answer: string }[]): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
 export function providerJsonLd({
   name,
   specialty,
@@ -105,6 +212,7 @@ export function providerJsonLd({
   city,
   state,
   zip,
+  description,
 }: {
   name: string;
   specialty: string;
@@ -114,12 +222,14 @@ export function providerJsonLd({
   city?: string | null;
   state?: string | null;
   zip?: string | null;
+  description?: string;
 }): Record<string, unknown> {
   return {
     '@context': 'https://schema.org',
     '@type': 'Physician',
     name,
     medicalSpecialty: specialty,
+    ...(description && { description }),
     identifier: { '@type': 'PropertyValue', name: 'NPI', value: npi },
     ...(phone && { telephone: phone }),
     ...(address && {

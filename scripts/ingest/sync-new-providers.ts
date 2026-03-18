@@ -8,7 +8,7 @@
 import { neon } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-http';
 import { providers, specialties, stats } from '../../src/db/schema';
-import { count, countDistinct } from 'drizzle-orm';
+import { count, countDistinct, desc } from 'drizzle-orm';
 import dotenv from 'dotenv';
 
 dotenv.config({ path: '.env.local' });
@@ -143,14 +143,31 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const daysBack = parseInt(process.argv[2] ?? '3', 10);
-  const since = new Date();
-  since.setDate(since.getDate() - daysBack);
+  const sql = neon(process.env.DATABASE_URL);
+  const db = drizzle({ client: sql });
+
+  // Find the latest enumeration_date in the DB to sync from there
+  const [latest] = await db
+    .select({ maxDate: providers.enumerationDate })
+    .from(providers)
+    .orderBy(desc(providers.enumerationDate))
+    .limit(1);
+
+  let since: Date;
+  if (latest?.maxDate) {
+    since = new Date(latest.maxDate);
+    console.log(`Latest provider in DB: ${since.toISOString().slice(0, 10)}`);
+  } else {
+    // Fallback: 30 days back if DB is empty
+    since = new Date();
+    since.setDate(since.getDate() - 30);
+    console.log('No providers in DB, looking back 30 days');
+  }
 
   // NPI API expects MM/DD/YYYY for enumeration_date range filter
   const sinceStr = `${String(since.getMonth() + 1).padStart(2, '0')}/${String(since.getDate()).padStart(2, '0')}/${since.getFullYear()}`;
 
-  console.log(`Fetching TX providers registered since ${sinceStr} (${daysBack} days)...\n`);
+  console.log(`Fetching TX providers registered since ${sinceStr}...\n`);
 
   const results = await fetchNewProviders(sinceStr);
   console.log(`\nFetched ${results.length} providers from NPI API\n`);
@@ -161,9 +178,6 @@ async function main(): Promise<void> {
   }
 
   const normalized = results.map(normalizeProvider);
-
-  const sql = neon(process.env.DATABASE_URL);
-  const db = drizzle({ client: sql });
 
   let upserted = 0;
   let errors = 0;

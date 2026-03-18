@@ -30,6 +30,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Sync new providers
-        run: pnpm tsx scripts/ingest/sync-new-providers.ts ${{ github.event.inputs.days || '3' }}
+        run: pnpm tsx scripts/ingest/sync-new-providers.ts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

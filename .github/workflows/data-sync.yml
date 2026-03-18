@@ -15,6 +15,7 @@ jobs:
   sync-providers:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    environment: production
 
     steps:
       - uses: actions/checkout@v4

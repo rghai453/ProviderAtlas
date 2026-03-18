@@ -15,7 +15,7 @@ jobs:
   sync-providers:
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    environment: production
+    environment: incredible-growth
 
     steps:
       - uses: actions/checkout@v4

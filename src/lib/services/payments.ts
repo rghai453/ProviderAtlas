@@ -124,6 +124,23 @@ export async function getAllProviderNpisWithPayments(): Promise<string[]> {
   return rows.map((r) => r.npi);
 }
 
+export async function getPaymentProviderCount(): Promise<number> {
+  const rows = await db
+    .select({ total: countDistinct(payments.providerNpi) })
+    .from(payments);
+  return Number(rows[0].total);
+}
+
+export async function getPaymentProviderNpisPage(limit: number, offset: number): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ npi: payments.providerNpi })
+    .from(payments)
+    .orderBy(payments.providerNpi)
+    .limit(limit)
+    .offset(offset);
+  return rows.map((r) => r.npi);
+}
+
 export interface PaymentAggregateStats {
   totalPayments: number;
   providerCount: number;

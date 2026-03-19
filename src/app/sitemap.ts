@@ -1,36 +1,26 @@
 import type { MetadataRoute } from 'next';
-import { getAllProviderNpis } from '@/lib/services/providers';
+import { getProviderCount, getProviderNpisPage } from '@/lib/services/providers';
 import { getAllSpecialties } from '@/lib/services/specialties';
-import { getAllProviderNpisWithPayments } from '@/lib/services/payments';
+import { getPaymentProviderCount, getPaymentProviderNpisPage } from '@/lib/services/payments';
 import { getAllCityNames } from '@/lib/services/stats';
 
 const BASE_URL = 'https://provider-atlas.com';
 const CHUNK_SIZE = 50_000;
 
-function chunkArray<T>(arr: T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < arr.length; i += size) {
-    chunks.push(arr.slice(i, i + size));
-  }
-  return chunks;
-}
-
 export async function generateSitemaps(): Promise<{ id: number }[]> {
-  const [npis, paymentNpis, specialties, cities] = await Promise.all([
-    getAllProviderNpis(),
-    getAllProviderNpisWithPayments(),
-    getAllSpecialties(),
-    getAllCityNames(),
+  const [providerCount, paymentCount] = await Promise.all([
+    getProviderCount(),
+    getPaymentProviderCount(),
   ]);
 
-  const providerChunks = chunkArray(npis, CHUNK_SIZE);
-  const paymentChunks = chunkArray(paymentNpis, CHUNK_SIZE);
+  const providerChunks = Math.ceil(providerCount / CHUNK_SIZE);
+  const paymentChunks = Math.ceil(paymentCount / CHUNK_SIZE);
 
   // ID scheme:
   // 0 = static + specialties + cities
   // 1..N = provider chunks
   // N+1..M = payment chunks
-  const totalIds = 1 + providerChunks.length + paymentChunks.length;
+  const totalIds = 1 + providerChunks + paymentChunks;
   return Array.from({ length: totalIds }, (_, i) => ({ id: i }));
 }
 
@@ -39,18 +29,13 @@ export default async function sitemap({
 }: {
   id: number;
 }): Promise<MetadataRoute.Sitemap> {
-  const [npis, paymentNpis, specialties, cities] = await Promise.all([
-    getAllProviderNpis(),
-    getAllProviderNpisWithPayments(),
-    getAllSpecialties(),
-    getAllCityNames(),
-  ]);
-
-  const providerChunks = chunkArray(npis, CHUNK_SIZE);
-  const paymentChunks = chunkArray(paymentNpis, CHUNK_SIZE);
-
   // ID 0: static + specialties + cities
   if (id === 0) {
+    const [specialties, cities] = await Promise.all([
+      getAllSpecialties(),
+      getAllCityNames(),
+    ]);
+
     const staticPages: MetadataRoute.Sitemap = [
       { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
       { url: `${BASE_URL}/providers`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
@@ -83,10 +68,15 @@ export default async function sitemap({
     return [...staticPages, ...specialtyPages, ...cityPages];
   }
 
+  // Figure out chunk boundaries using counts (not full data loads)
+  const providerCount = await getProviderCount();
+  const providerChunks = Math.ceil(providerCount / CHUNK_SIZE);
+
   // IDs 1..N: provider chunks
   const providerIndex = id - 1;
-  if (providerIndex < providerChunks.length) {
-    return providerChunks[providerIndex].map((npi) => ({
+  if (providerIndex < providerChunks) {
+    const npis = await getProviderNpisPage(CHUNK_SIZE, providerIndex * CHUNK_SIZE);
+    return npis.map((npi) => ({
       url: `${BASE_URL}/provider/${npi}`,
       lastModified: new Date(),
       changeFrequency: 'weekly' as const,
@@ -95,15 +85,16 @@ export default async function sitemap({
   }
 
   // IDs N+1..M: payment chunks
-  const paymentIndex = id - 1 - providerChunks.length;
-  if (paymentIndex < paymentChunks.length) {
-    return paymentChunks[paymentIndex].map((npi) => ({
-      url: `${BASE_URL}/payments/${npi}`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
-      priority: 0.5,
-    }));
+  const paymentIndex = id - 1 - providerChunks;
+  const paymentNpis = await getPaymentProviderNpisPage(CHUNK_SIZE, paymentIndex * CHUNK_SIZE);
+  if (paymentNpis.length === 0) {
+    return [];
   }
 
-  return [];
+  return paymentNpis.map((npi) => ({
+    url: `${BASE_URL}/payments/${npi}`,
+    lastModified: new Date(),
+    changeFrequency: 'monthly' as const,
+    priority: 0.5,
+  }));
 }

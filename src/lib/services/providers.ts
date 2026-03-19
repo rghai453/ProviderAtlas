@@ -221,6 +221,16 @@ export async function getProviderCount(): Promise<number> {
   return Number(total);
 }
 
+export async function getProviderNpisPage(limit: number, offset: number): Promise<string[]> {
+  const rows = await db
+    .select({ npi: providers.npi })
+    .from(providers)
+    .orderBy(providers.npi)
+    .limit(limit)
+    .offset(offset);
+  return rows.map((r) => r.npi);
+}
+
 export async function getRelatedProviders(
   specialtyDescription: string,
   city: string,

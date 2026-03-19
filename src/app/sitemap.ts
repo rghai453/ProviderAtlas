@@ -4,7 +4,7 @@ import { getAllSpecialties } from '@/lib/services/specialties';
 import { getAllProviderNpisWithPayments } from '@/lib/services/payments';
 import { getAllCityNames } from '@/lib/services/stats';
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://provideratlas.com';
+const BASE_URL = 'https://provider-atlas.com';
 const CHUNK_SIZE = 50_000;
 
 function chunkArray<T>(arr: T[], size: number): T[][] {

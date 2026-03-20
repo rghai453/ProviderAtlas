@@ -5,7 +5,7 @@ import { getPaymentProviderCount, getPaymentProviderNpisPage } from '@/lib/servi
 import { getAllCityNames, getAllZipCodes } from '@/lib/services/stats';
 import { BASE_URL } from '@/lib/seo';
 
-const CHUNK_SIZE = 10_000;
+const CHUNK_SIZE = 2_000;
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
   const [providerCount, paymentCount] = await Promise.all([

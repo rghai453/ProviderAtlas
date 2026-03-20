@@ -1,6 +1,5 @@
 import { generateSitemaps } from '@/app/sitemap';
-
-const BASE_URL = 'https://provider-atlas.com';
+import { BASE_URL } from '@/lib/seo';
 
 export async function GET(): Promise<Response> {
   const sitemaps = await generateSitemaps();
@@ -10,7 +9,7 @@ export async function GET(): Promise<Response> {
     '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ...sitemaps.map(
       ({ id }) =>
-        `  <sitemap>\n    <loc>${BASE_URL}/sitemap/${id}.xml</loc>\n    <lastmod>${new Date().toISOString()}</lastmod>\n  </sitemap>`
+        `  <sitemap>\n    <loc>${BASE_URL}/sitemap/${id}.xml</loc>\n  </sitemap>`
     ),
     '</sitemapindex>',
   ].join('\n');

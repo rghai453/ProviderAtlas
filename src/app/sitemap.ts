@@ -5,7 +5,7 @@ import { getPaymentProviderCount, getPaymentProviderNpisPage } from '@/lib/servi
 import { getAllCityNames } from '@/lib/services/stats';
 
 const BASE_URL = 'https://provider-atlas.com';
-const CHUNK_SIZE = 50_000;
+const CHUNK_SIZE = 10_000;
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
   const [providerCount, paymentCount] = await Promise.all([
@@ -25,10 +25,12 @@ export async function generateSitemaps(): Promise<{ id: number }[]> {
 }
 
 export default async function sitemap({
-  id,
+  id: idProp,
 }: {
-  id: number;
+  id: number | Promise<number>;
 }): Promise<MetadataRoute.Sitemap> {
+  const id = Number(typeof idProp === 'object' && idProp instanceof Promise ? await idProp : idProp);
+
   // ID 0: static + specialties + cities
   if (id === 0) {
     const [specialties, cities] = await Promise.all([

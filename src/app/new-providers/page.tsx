@@ -5,6 +5,9 @@ import { Pagination } from '@/components/Pagination';
 import { auth } from '@/lib/auth/server';
 import { getUserSubscriptionTier } from '@/lib/services/users';
 import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
+import { BASE_URL } from '@/lib/seo';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Recently Registered Providers — Texas | ProviderAtlas',
@@ -20,6 +23,7 @@ export const metadata: Metadata = {
     title: 'Recently Registered Providers — Texas | ProviderAtlas',
     description: 'Texas healthcare providers who recently registered with the NPI registry.',
   },
+  alternates: { canonical: `${BASE_URL}/new-providers` },
 };
 
 interface NewProvidersPageProps {

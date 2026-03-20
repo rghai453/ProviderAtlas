@@ -5,7 +5,8 @@ import { AuthProvider } from '@/components/AuthProvider';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { cn } from '@/lib/utils';
-import { organizationJsonLd, websiteJsonLd, BASE_URL } from '@/lib/seo';
+import { organizationJsonLd, websiteJsonLd, BASE_URL, DEFAULT_OG_IMAGE } from '@/lib/seo';
+import Script from 'next/script';
 
 const geistSans = Geist({ subsets: ['latin'], variable: '--font-sans' });
 const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
       'Search 300,000+ Texas healthcare providers. Cross-referenced NPI registry and Open Payments pharma data. Updated daily.',
     siteName: 'ProviderAtlas',
     type: 'website',
+    images: [DEFAULT_OG_IMAGE],
   },
   twitter: {
     card: 'summary_large_image',
@@ -44,16 +46,14 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn('dark h-full', geistSans.variable, geistMono.variable)}
     >
-      <head>
+      <body className="font-sans antialiased">
         {process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID && (
-          <script
-            async
+          <Script
             src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.NEXT_PUBLIC_GOOGLE_ADSENSE_ID}`}
+            strategy="lazyOnload"
             crossOrigin="anonymous"
           />
         )}
-      </head>
-      <body className="font-sans antialiased">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd()) }}

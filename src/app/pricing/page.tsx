@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { PricingTable } from '@/components/PricingTable';
-import { faqJsonLd } from '@/lib/seo';
+import { faqJsonLd, BASE_URL } from '@/lib/seo';
+
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   title: 'Pricing — ProviderAtlas',
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
     title: 'Pricing — ProviderAtlas',
     description: 'Unlock contact info, exports, and alerts with ProviderAtlas Pro.',
   },
+  alternates: { canonical: `${BASE_URL}/pricing` },
 };
 
 const pricingFaqs = faqJsonLd([

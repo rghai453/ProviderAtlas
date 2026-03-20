@@ -9,6 +9,8 @@ import { auth } from '@/lib/auth/server';
 import { getUserSubscriptionTier } from '@/lib/services/users';
 import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
+export const revalidate = 3600;
+
 interface SpecialtyPageProps {
   params: Promise<{ specialty: string }>;
   searchParams: Promise<{ page?: string }>;
@@ -85,6 +87,12 @@ export default async function SpecialtyPage({
         <h1 className="text-2xl font-bold tracking-tight">{displayName}</h1>
         <p className="text-sm text-muted-foreground mt-1">
           <span className="font-mono">{results.total.toLocaleString()}</span> providers in Texas
+        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+          Browse {displayName.toLowerCase()} providers across Texas with NPI registry details,
+          practice locations, Medicare utilization data, and pharma payment transparency from
+          CMS Open Payments. Each profile includes the provider&apos;s unique NPI number, specialty
+          credentials, and practice address.
         </p>
       </div>
 

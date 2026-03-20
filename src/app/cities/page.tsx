@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getTopCities } from '@/lib/services/stats';
+import { BASE_URL } from '@/lib/seo';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Cities — Browse Healthcare Providers by City | ProviderAtlas',
@@ -16,6 +19,7 @@ export const metadata: Metadata = {
     title: 'Cities — Browse Healthcare Providers by City | ProviderAtlas',
     description: 'Browse healthcare providers across Texas cities.',
   },
+  alternates: { canonical: `${BASE_URL}/cities` },
 };
 
 export default async function CitiesPage(): Promise<React.ReactNode> {

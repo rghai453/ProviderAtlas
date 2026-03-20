@@ -6,7 +6,9 @@ import { getNewProviders } from '@/lib/services/providers';
 import { ProviderCard } from '@/components/ProviderCard';
 import { LiveSearch } from '@/components/LiveSearch';
 import { AnimatedCounter } from '@/components/AnimatedCounter';
-import { faqJsonLd } from '@/lib/seo';
+import { faqJsonLd, BASE_URL } from '@/lib/seo';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'ProviderAtlas — Texas Healthcare Provider Intelligence',
@@ -19,6 +21,7 @@ export const metadata: Metadata = {
     siteName: 'ProviderAtlas',
     type: 'website',
   },
+  alternates: { canonical: BASE_URL },
 };
 
 // Specialties people actually search for, not random high-count noise

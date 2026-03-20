@@ -109,6 +109,14 @@ export async function getDataSourceCounts(): Promise<DataSourceCounts> {
   };
 }
 
+export async function getAllZipCodes(): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ zip: providers.zip })
+    .from(providers)
+    .where(sql`${providers.zip} is not null`);
+  return rows.map((r) => r.zip!);
+}
+
 export async function getStatByKey(
   key: string,
 ): Promise<typeof stats.$inferSelect | undefined> {

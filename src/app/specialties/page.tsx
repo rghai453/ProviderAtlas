@@ -3,6 +3,9 @@ import Link from 'next/link';
 import { getAllSpecialties } from '@/lib/services/specialties';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { BASE_URL } from '@/lib/seo';
+
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Medical Specialties Directory — Texas | ProviderAtlas',
@@ -19,6 +22,7 @@ export const metadata: Metadata = {
     title: 'Medical Specialties Directory — Texas | ProviderAtlas',
     description: 'Browse all medical specialties in Texas.',
   },
+  alternates: { canonical: `${BASE_URL}/specialties` },
 };
 
 export default async function SpecialtiesPage(): Promise<React.ReactNode> {

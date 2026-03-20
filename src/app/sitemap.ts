@@ -1,10 +1,10 @@
 import type { MetadataRoute } from 'next';
-import { getProviderCount, getProviderNpisPage } from '@/lib/services/providers';
+import { getProviderCount, getProviderNpisPage, getSpecialtyCityCombinations } from '@/lib/services/providers';
 import { getAllSpecialties } from '@/lib/services/specialties';
 import { getPaymentProviderCount, getPaymentProviderNpisPage } from '@/lib/services/payments';
-import { getAllCityNames } from '@/lib/services/stats';
+import { getAllCityNames, getAllZipCodes } from '@/lib/services/stats';
+import { BASE_URL } from '@/lib/seo';
 
-const BASE_URL = 'https://provider-atlas.com';
 const CHUNK_SIZE = 10_000;
 
 export async function generateSitemaps(): Promise<{ id: number }[]> {
@@ -17,7 +17,7 @@ export async function generateSitemaps(): Promise<{ id: number }[]> {
   const paymentChunks = Math.ceil(paymentCount / CHUNK_SIZE);
 
   // ID scheme:
-  // 0 = static + specialties + cities
+  // 0 = static + specialties + cities + zips + specialty×city
   // 1..N = provider chunks
   // N+1..M = payment chunks
   const totalIds = 1 + providerChunks + paymentChunks;
@@ -31,43 +31,50 @@ export default async function sitemap({
 }): Promise<MetadataRoute.Sitemap> {
   const id = Number(typeof idProp === 'object' && idProp instanceof Promise ? await idProp : idProp);
 
-  // ID 0: static + specialties + cities
+  // ID 0: static + specialties + cities + zips + specialty×city
   if (id === 0) {
-    const [specialties, cities] = await Promise.all([
+    const [specialties, cities, zipCodes, specialtyCityCombos] = await Promise.all([
       getAllSpecialties(),
       getAllCityNames(),
+      getAllZipCodes(),
+      getSpecialtyCityCombinations(),
     ]);
 
     const staticPages: MetadataRoute.Sitemap = [
-      { url: BASE_URL, lastModified: new Date(), changeFrequency: 'daily', priority: 1 },
-      { url: `${BASE_URL}/providers`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
-      { url: `${BASE_URL}/specialties`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/cities`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/new-providers`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
-      { url: `${BASE_URL}/rankings`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/rankings/payments`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/rankings/specialties`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/rankings/mips`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/rankings/prescribers`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/rankings/medicare`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.8 },
-      { url: `${BASE_URL}/pricing`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+      { url: BASE_URL },
+      { url: `${BASE_URL}/providers` },
+      { url: `${BASE_URL}/specialties` },
+      { url: `${BASE_URL}/cities` },
+      { url: `${BASE_URL}/new-providers` },
+      { url: `${BASE_URL}/rankings` },
+      { url: `${BASE_URL}/rankings/payments` },
+      { url: `${BASE_URL}/rankings/specialties` },
+      { url: `${BASE_URL}/rankings/mips` },
+      { url: `${BASE_URL}/rankings/prescribers` },
+      { url: `${BASE_URL}/rankings/medicare` },
+      { url: `${BASE_URL}/pricing` },
+      { url: `${BASE_URL}/about` },
+      { url: `${BASE_URL}/privacy` },
+      { url: `${BASE_URL}/terms` },
     ];
 
     const specialtyPages: MetadataRoute.Sitemap = specialties.map((s) => ({
       url: `${BASE_URL}/providers/${encodeURIComponent(s.description.toLowerCase())}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
     }));
 
     const cityPages: MetadataRoute.Sitemap = cities.map((city) => ({
       url: `${BASE_URL}/cities/${encodeURIComponent(city.toLowerCase())}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
     }));
 
-    return [...staticPages, ...specialtyPages, ...cityPages];
+    const zipPages: MetadataRoute.Sitemap = zipCodes.map((zip) => ({
+      url: `${BASE_URL}/zip/${zip}`,
+    }));
+
+    const specialtyCityPages: MetadataRoute.Sitemap = specialtyCityCombos.map((combo) => ({
+      url: `${BASE_URL}/providers/${encodeURIComponent(combo.specialty.toLowerCase())}/${encodeURIComponent(combo.city.toLowerCase())}`,
+    }));
+
+    return [...staticPages, ...specialtyPages, ...cityPages, ...zipPages, ...specialtyCityPages];
   }
 
   // Figure out chunk boundaries using counts (not full data loads)
@@ -80,9 +87,6 @@ export default async function sitemap({
     const npis = await getProviderNpisPage(CHUNK_SIZE, providerIndex * CHUNK_SIZE);
     return npis.map((npi) => ({
       url: `${BASE_URL}/provider/${npi}`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.6,
     }));
   }
 
@@ -95,8 +99,5 @@ export default async function sitemap({
 
   return paymentNpis.map((npi) => ({
     url: `${BASE_URL}/payments/${npi}`,
-    lastModified: new Date(),
-    changeFrequency: 'monthly' as const,
-    priority: 0.5,
   }));
 }

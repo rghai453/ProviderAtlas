@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { getHomepageStats, getDataSourceCounts } from '@/lib/services/stats';
 import { faqJsonLd, BASE_URL } from '@/lib/seo';
 
+export const revalidate = 86400;
+
 export async function generateMetadata(): Promise<Metadata> {
   const title = 'About ProviderAtlas — Data Sources & Methodology';
   const description =

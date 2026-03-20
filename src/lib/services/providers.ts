@@ -231,6 +231,20 @@ export async function getProviderNpisPage(limit: number, offset: number): Promis
   return rows.map((r) => r.npi);
 }
 
+export async function getSpecialtyCityCombinations(): Promise<{ specialty: string; city: string }[]> {
+  const rows = await db
+    .selectDistinct({
+      specialty: providers.specialtyDescription,
+      city: providers.city,
+    })
+    .from(providers)
+    .where(and(
+      sql`${providers.specialtyDescription} is not null`,
+      sql`${providers.city} is not null`,
+    ));
+  return rows.map((r) => ({ specialty: r.specialty!, city: r.city! }));
+}
+
 export async function getRelatedProviders(
   specialtyDescription: string,
   city: string,

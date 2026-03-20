@@ -11,6 +11,8 @@ import { auth } from '@/lib/auth/server';
 import { getUserSubscriptionTier } from '@/lib/services/users';
 import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
+export const revalidate = 3600;
+
 interface SpecialtyCityPageProps {
   params: Promise<{ specialty: string; city: string }>;
   searchParams: Promise<{ page?: string }>;

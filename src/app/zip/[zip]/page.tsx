@@ -10,6 +10,8 @@ import { auth } from '@/lib/auth/server';
 import { getUserSubscriptionTier } from '@/lib/services/users';
 import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
+export const revalidate = 3600;
+
 interface ZipPageProps {
   params: Promise<{ zip: string }>;
   searchParams: Promise<{ page?: string }>;
@@ -80,6 +82,10 @@ export default async function ZipPage({
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           <span className="font-mono">{count.toLocaleString()}</span> providers in this area
+        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+          Browse healthcare providers registered in ZIP code {zip}. View NPI details, specialty
+          information, and pharma payment data from CMS Open Payments for each provider in this area.
         </p>
       </div>
 

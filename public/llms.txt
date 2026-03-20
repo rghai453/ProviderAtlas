@@ -30,5 +30,5 @@ ProviderAtlas is a public data SaaS that aggregates and cross-references healthc
 - Pro ($29/mo): Full Medicare procedure data, complete prescribing data, full payment breakdowns, MIPS category scores, contact info, CSV exports
 
 ## Discovery
-- Sitemap: https://provideratlas.com/sitemap.xml
-- Full documentation: https://provideratlas.com/llms-full.txt
+- Sitemap: https://provider-atlas.com/sitemap.xml
+- Full documentation: https://provider-atlas.com/llms-full.txt

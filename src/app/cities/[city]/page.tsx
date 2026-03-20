@@ -10,6 +10,8 @@ import { auth } from '@/lib/auth/server';
 import { getUserSubscriptionTier } from '@/lib/services/users';
 import { FREE_SEARCH_MAX_PAGES } from '@/lib/tier-limits';
 
+export const revalidate = 3600;
+
 interface CityPageProps {
   params: Promise<{ city: string }>;
   searchParams: Promise<{ page?: string }>;
@@ -76,6 +78,11 @@ export default async function CityPage({
         <h1 className="text-2xl font-bold tracking-tight">{decodedCity}, Texas</h1>
         <p className="text-sm text-muted-foreground mt-1">
           <span className="font-mono">{count.toLocaleString()}</span> healthcare providers
+        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+          Find healthcare providers in {decodedCity}, Texas. Browse by specialty, view NPI registry
+          details, check Medicare utilization data, and review pharma payment transparency. All
+          data sourced from CMS federal datasets and updated regularly.
         </p>
       </div>
 

@@ -1,6 +1,13 @@
 import type { Metadata } from 'next';
 
-export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://provideratlas.com';
+export const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://provider-atlas.com';
+
+export const DEFAULT_OG_IMAGE = {
+  url: `${BASE_URL}/og.png`,
+  width: 1200,
+  height: 630,
+  alt: 'ProviderAtlas — Texas Healthcare Provider Intelligence',
+};
 
 export interface BreadcrumbItem {
   name: string;
@@ -72,6 +79,7 @@ export function createProviderMetadata({
       url: `${BASE_URL}/provider/${npi}`,
       siteName: 'ProviderAtlas',
       type: 'profile',
+      images: [DEFAULT_OG_IMAGE],
     },
     twitter: { card: 'summary', title, description },
     alternates: { canonical: `${BASE_URL}/provider/${npi}` },
@@ -97,7 +105,7 @@ export function createSpecialtyMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, url: `${BASE_URL}${path}`, siteName: 'ProviderAtlas' },
+    openGraph: { title, description, url: `${BASE_URL}${path}`, siteName: 'ProviderAtlas', images: [DEFAULT_OG_IMAGE] },
     twitter: { card: 'summary', title, description },
     alternates: { canonical: `${BASE_URL}${path}` },
   };
@@ -116,7 +124,7 @@ export function createCityMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, url: `${BASE_URL}/cities/${encodeURIComponent(city.toLowerCase())}`, siteName: 'ProviderAtlas' },
+    openGraph: { title, description, url: `${BASE_URL}/cities/${encodeURIComponent(city.toLowerCase())}`, siteName: 'ProviderAtlas', images: [DEFAULT_OG_IMAGE] },
     twitter: { card: 'summary', title, description },
     alternates: { canonical: `${BASE_URL}/cities/${encodeURIComponent(city.toLowerCase())}` },
   };
@@ -135,7 +143,7 @@ export function createZipMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, url: `${BASE_URL}/zip/${zip}`, siteName: 'ProviderAtlas' },
+    openGraph: { title, description, url: `${BASE_URL}/zip/${zip}`, siteName: 'ProviderAtlas', images: [DEFAULT_OG_IMAGE] },
     twitter: { card: 'summary', title, description },
     alternates: { canonical: `${BASE_URL}/zip/${zip}` },
   };
@@ -164,6 +172,7 @@ export function createPaymentsMetadata({
       description,
       url: `${BASE_URL}/payments/${npi}`,
       siteName: 'ProviderAtlas',
+      images: [DEFAULT_OG_IMAGE],
     },
     twitter: { card: 'summary', title, description },
     alternates: { canonical: `${BASE_URL}/payments/${npi}` },
@@ -182,7 +191,7 @@ export function createRankingsMetadata({
   return {
     title,
     description,
-    openGraph: { title, description, url: `${BASE_URL}${path}`, siteName: 'ProviderAtlas' },
+    openGraph: { title, description, url: `${BASE_URL}${path}`, siteName: 'ProviderAtlas', images: [DEFAULT_OG_IMAGE] },
     twitter: { card: 'summary', title, description },
     alternates: { canonical: `${BASE_URL}${path}` },
   };

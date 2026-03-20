@@ -1,0 +1,5 @@
+[    1093ms] [WARNING] AdSense head tag doesn't support data-nscript attribute. @ http://localhost:3000/_next/static/chunks/e1318_next_dist_433322af._.js:2297
+[    1787ms] [ERROR] Framing 'https://ep2.adtrafficquality.google/' violates the following report-only Content Security Policy directive: "frame-src https://googleads.g.doubleclick.net https://www.google.com". The violation has been logged, but no further action has been taken.
+ @ https://ep2.adtrafficquality.google/:0
+[    2017ms] [ERROR] Framing 'https://ep2.adtrafficquality.google/' violates the following report-only Content Security Policy directive: "frame-src https://googleads.g.doubleclick.net https://www.google.com". The violation has been logged, but no further action has been taken.
+ @ https://ep2.adtrafficquality.google/:0

@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { breadcrumbJsonLd, BASE_URL } from '@/lib/seo';
 
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: 'Texas Healthcare Provider Rankings',
   description:

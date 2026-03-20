@@ -32,7 +32,7 @@ export function AnimatedCounter({
   className,
 }: AnimatedCounterProps): React.ReactNode {
   const { numeric, suffix, prefix } = parseValue(value);
-  const [display, setDisplay] = useState<string>(`${prefix}0${suffix}`);
+  const [display, setDisplay] = useState<string>(value);
   const hasAnimatedRef = useRef<boolean>(false);
   const rafRef = useRef<number | null>(null);
   const containerRef = useRef<HTMLSpanElement>(null);

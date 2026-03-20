@@ -1,12 +1,24 @@
+'use client';
+
 import Link from 'next/link';
+import { useProStatus } from '@/hooks/use-pro-status';
 
 interface ProGateProps {
-  isPro: boolean;
   label?: string;
   children: React.ReactNode;
 }
 
-export function ProGate({ isPro, label, children }: ProGateProps): React.ReactNode {
+export function ProGate({ label, children }: ProGateProps): React.ReactNode {
+  const { isPro, isLoading } = useProStatus();
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center border border-dashed border-border rounded-sm px-6 py-8">
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+      </div>
+    );
+  }
+
   if (isPro) return <>{children}</>;
 
   return (

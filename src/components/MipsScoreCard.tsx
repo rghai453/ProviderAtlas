@@ -3,10 +3,9 @@ import { ProGate } from '@/components/ProGate';
 
 interface MipsScoreCardProps {
   mips: MipsOverview | null;
-  isPro: boolean;
 }
 
-export function MipsScoreCard({ mips, isPro }: MipsScoreCardProps): React.ReactNode {
+export function MipsScoreCard({ mips }: MipsScoreCardProps): React.ReactNode {
   if (!mips) return null;
 
   const categories = [
@@ -30,7 +29,7 @@ export function MipsScoreCard({ mips, isPro }: MipsScoreCardProps): React.ReactN
         <p className="text-xs text-muted-foreground">Final MIPS Score</p>
       </div>
 
-      <ProGate isPro={isPro} label="Upgrade to Pro for full MIPS breakdown">
+      <ProGate label="Upgrade to Pro for full MIPS breakdown">
         <div className="border border-border rounded-sm overflow-hidden">
           <table className="w-full text-xs">
             <thead>

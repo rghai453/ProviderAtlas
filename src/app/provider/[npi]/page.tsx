@@ -11,14 +11,12 @@ import { PaymentHeatBadge } from '@/components/PaymentHeatBadge';
 import { getMedicareOverview, getPrescriberOverview } from '@/lib/services/medicare';
 import { getMipsOverview } from '@/lib/services/mips';
 import { Separator } from '@/components/ui/separator';
-import { auth } from '@/lib/auth/server';
-import { getUserById, createUser, getUserSubscriptionTier } from '@/lib/services/users';
 import { ProGate } from '@/components/ProGate';
 import { MipsScoreCard } from '@/components/MipsScoreCard';
 import { FREE_PRESCRIBER_DRUG_LIMIT } from '@/lib/tier-limits';
-import { AdUnit } from '@/components/AdUnit';
+import { FreeOnlyAdUnit } from '@/components/FreeOnlyAdUnit';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 interface ProviderPageProps {
   params: Promise<{ npi: string }>;
@@ -58,26 +56,6 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
     provider.entityType === 'organization'
       ? (provider.organizationName ?? 'Unknown Organization')
       : [provider.firstName, provider.lastName].filter(Boolean).join(' ') || 'Unknown Provider';
-
-  // Auth check for contact info paywall + user creation on first visit
-  let isPro = false;
-  try {
-    const { data: session } = await auth.getSession();
-    if (session?.user) {
-      const existingUser = await getUserById(session.user.id);
-      if (!existingUser) {
-        await createUser({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.name ?? undefined,
-        });
-      }
-      const tier = await getUserSubscriptionTier(session.user.id);
-      isPro = tier === 'pro';
-    }
-  } catch {
-    // Auth unavailable — default to blurred
-  }
 
   const relatedProviders =
     provider.specialtyDescription && provider.city
@@ -238,12 +216,7 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
             <Separator />
 
             {/* Contact — phone/fax only, no address (already shown above) */}
-            <ContactInfo
-              phone={isPro ? provider.phone : null}
-              fax={isPro ? provider.fax : null}
-              address={null}
-              isBlurred={!isPro}
-            />
+            <ContactInfo npi={provider.npi} />
 
             {/* Medicare Activity */}
             {medicareData && (
@@ -268,7 +241,7 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
                     </div>
                   </div>
                   {medicareData.topProcedures.length > 0 && (
-                    <ProGate isPro={isPro} label="Upgrade to Pro for full Medicare procedure data">
+                    <ProGate label="Upgrade to Pro for full Medicare procedure data">
                       <div className="border border-border rounded-sm overflow-hidden">
                         <table className="w-full text-xs">
                           <thead>
@@ -297,16 +270,14 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
               </>
             )}
 
-            {/* In-content ad (free users only) */}
-            {!isPro && (
-              <AdUnit slot="XXXXXXXXXX" format="rectangle" className="my-6" />
-            )}
+            {/* In-content ad (hidden for Pro via client-side check) */}
+            <FreeOnlyAdUnit slot="XXXXXXXXXX" format="rectangle" className="my-6" />
 
             {/* MIPS Performance */}
             {mipsData && (
               <>
                 <Separator />
-                <MipsScoreCard mips={mipsData} isPro={isPro} />
+                <MipsScoreCard mips={mipsData} />
               </>
             )}
 
@@ -332,59 +303,50 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
                       <p className="text-xs text-muted-foreground">Patients prescribed</p>
                     </div>
                   </div>
-                  {prescriberData.topDrugs.length > 0 && (() => {
-                    const visibleDrugs = isPro
-                      ? prescriberData.topDrugs
-                      : prescriberData.topDrugs.slice(0, FREE_PRESCRIBER_DRUG_LIMIT);
-                    const hiddenDrugs = isPro
-                      ? []
-                      : prescriberData.topDrugs.slice(FREE_PRESCRIBER_DRUG_LIMIT);
-
-                    return (
-                      <>
-                        <div className="border border-border rounded-sm overflow-hidden">
-                          <table className="w-full text-xs">
-                            <thead>
-                              <tr className="border-b border-border bg-muted/30">
-                                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Drug</th>
-                                <th className="text-left px-3 py-2 font-medium text-muted-foreground">Generic</th>
-                                <th className="text-right px-3 py-2 font-medium text-muted-foreground">Claims</th>
-                                <th className="text-right px-3 py-2 font-medium text-muted-foreground">Cost</th>
+                  {prescriberData.topDrugs.length > 0 && (
+                    <>
+                      <div className="border border-border rounded-sm overflow-hidden">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b border-border bg-muted/30">
+                              <th className="text-left px-3 py-2 font-medium text-muted-foreground">Drug</th>
+                              <th className="text-left px-3 py-2 font-medium text-muted-foreground">Generic</th>
+                              <th className="text-right px-3 py-2 font-medium text-muted-foreground">Claims</th>
+                              <th className="text-right px-3 py-2 font-medium text-muted-foreground">Cost</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {prescriberData.topDrugs.slice(0, FREE_PRESCRIBER_DRUG_LIMIT).map((drug) => (
+                              <tr key={`${drug.genericName}-${drug.brandName}`}>
+                                <td className="px-3 py-2 font-medium">{drug.brandName ?? '—'}</td>
+                                <td className="px-3 py-2 text-muted-foreground">{drug.genericName}</td>
+                                <td className="px-3 py-2 text-right font-mono">{drug.totalClaims.toLocaleString()}</td>
+                                <td className="px-3 py-2 text-right font-mono">${(drug.totalDrugCost / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
                               </tr>
-                            </thead>
-                            <tbody className="divide-y divide-border">
-                              {visibleDrugs.map((drug) => (
-                                <tr key={`${drug.genericName}-${drug.brandName}`}>
-                                  <td className="px-3 py-2 font-medium">{drug.brandName ?? '—'}</td>
-                                  <td className="px-3 py-2 text-muted-foreground">{drug.genericName}</td>
-                                  <td className="px-3 py-2 text-right font-mono">{drug.totalClaims.toLocaleString()}</td>
-                                  <td className="px-3 py-2 text-right font-mono">${(drug.totalDrugCost / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                        {hiddenDrugs.length > 0 && (
-                          <ProGate isPro={false} label="Upgrade to Pro for full prescribing data">
-                            <div className="border border-border rounded-sm overflow-hidden mt-1">
-                              <table className="w-full text-xs">
-                                <tbody className="divide-y divide-border">
-                                  {hiddenDrugs.map((drug) => (
-                                    <tr key={`${drug.genericName}-${drug.brandName}`}>
-                                      <td className="px-3 py-2 font-medium">{drug.brandName ?? '—'}</td>
-                                      <td className="px-3 py-2 text-muted-foreground">{drug.genericName}</td>
-                                      <td className="px-3 py-2 text-right font-mono">{drug.totalClaims.toLocaleString()}</td>
-                                      <td className="px-3 py-2 text-right font-mono">${(drug.totalDrugCost / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
-                            </div>
-                          </ProGate>
-                        )}
-                      </>
-                    );
-                  })()}
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {prescriberData.topDrugs.length > FREE_PRESCRIBER_DRUG_LIMIT && (
+                        <ProGate label="Upgrade to Pro for full prescribing data">
+                          <div className="border border-border rounded-sm overflow-hidden mt-1">
+                            <table className="w-full text-xs">
+                              <tbody className="divide-y divide-border">
+                                {prescriberData.topDrugs.slice(FREE_PRESCRIBER_DRUG_LIMIT).map((drug) => (
+                                  <tr key={`${drug.genericName}-${drug.brandName}`}>
+                                    <td className="px-3 py-2 font-medium">{drug.brandName ?? '—'}</td>
+                                    <td className="px-3 py-2 text-muted-foreground">{drug.genericName}</td>
+                                    <td className="px-3 py-2 text-right font-mono">{drug.totalClaims.toLocaleString()}</td>
+                                    <td className="px-3 py-2 text-right font-mono">${(drug.totalDrugCost / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </ProGate>
+                      )}
+                    </>
+                  )}
                 </div>
               </>
             )}
@@ -402,7 +364,7 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
                     <span className="font-mono font-semibold text-foreground">{uniquePayerCount}</span> {uniquePayerCount === 1 ? 'company' : 'companies'}
                   </p>
 
-                  <ProGate isPro={isPro} label="Upgrade to Pro for full payment breakdown">
+                  <ProGate label="Upgrade to Pro for full payment breakdown">
                     <PaymentBarChart payments={provider.payments} />
 
                     <details className="mt-4 group">
@@ -490,10 +452,8 @@ export default async function ProviderPage({ params }: ProviderPageProps): Promi
               </Link>
             </div>
 
-            {/* Sidebar ad (free users only) */}
-            {!isPro && (
-              <AdUnit slot="XXXXXXXXXX" format="vertical" className="min-h-[250px]" />
-            )}
+            {/* Sidebar ad (hidden for Pro via client-side check) */}
+            <FreeOnlyAdUnit slot="XXXXXXXXXX" format="vertical" className="min-h-[250px]" />
 
           </aside>
         </div>

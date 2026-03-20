@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/auth/server';
-import { getUserById } from '@/lib/services/users';
+import { getUserById, createUser } from '@/lib/services/users';
 import { Separator } from '@/components/ui/separator';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,14 @@ export default async function DashboardPage(): Promise<React.ReactNode> {
     redirect('/auth/sign-in');
   }
 
-  const user = await getUserById(session.user.id);
+  let user = await getUserById(session.user.id);
+  if (!user) {
+    user = await createUser({
+      id: session.user.id,
+      email: session.user.email,
+      name: session.user.name ?? undefined,
+    });
+  }
   const tier = user?.subscriptionTier ?? 'free';
   const isPro = tier === 'pro';
 
